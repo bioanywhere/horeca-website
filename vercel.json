@@ -1,0 +1,234 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 300,
+      "includeFiles": "datos/**"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/vigilante",
+      "schedule": "*/10 * * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/revision",
+      "destination": "/api/revision"
+    },
+    {
+      "source": "/panel",
+      "destination": "/api/panel"
+    },
+    {
+      "source": "/recuperacion",
+      "destination": "/api/recuperacion-panel"
+    },
+    {
+      "source": "/metricas",
+      "destination": "/api/metricas-panel"
+    },
+    {
+      "source": "/referidos",
+      "destination": "/api/referidos-panel"
+    },
+    {
+      "source": "/entregas",
+      "destination": "/api/entregas-panel"
+    },
+    {
+      "source": "/cotizaciones",
+      "destination": "/api/cotizaciones-panel"
+    },
+    {
+      "source": "/seo",
+      "destination": "/api/seo-panel"
+    },
+    {
+      "source": "/api/asesor/c/:codigo",
+      "destination": "/api/c?codigo=:codigo"
+    },
+    {
+      "source": "/apps/asesor/c/:codigo",
+      "destination": "/api/c?codigo=:codigo"
+    },
+    {
+      "source": "/api/asesor/comparar",
+      "destination": "/api/comparar"
+    },
+    {
+      "source": "/api/asesor/fiscales",
+      "destination": "/api/fiscales"
+    },
+    {
+      "source": "/fiscales",
+      "destination": "/api/fiscales"
+    },
+    {
+      "source": "/",
+      "destination": "/api/asesor"
+    },
+    {
+      "source": "/apps/asesor",
+      "destination": "/api/asesor"
+    },
+    {
+      "source": "/apps/asesor/fiscales",
+      "destination": "/api/fiscales"
+    },
+    {
+      "source": "/apps/asesor/comparar",
+      "destination": "/api/comparar"
+    },
+    {
+      "source": "/apps/asesor/(.*)",
+      "destination": "/api/asesor"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
+    },
+    {
+      "source": "/panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/api/panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/recuperacion",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/api/recuperacion-panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/metricas",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/api/metricas-panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/referidos",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/api/referidos-panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/entregas",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com; frame-src https://www.openstreetmap.org"
+        }
+      ]
+    },
+    {
+      "source": "/api/entregas-panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com; frame-src https://www.openstreetmap.org"
+        }
+      ]
+    },
+    {
+      "source": "/cotizaciones",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/api/cotizaciones-panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/seo",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    },
+    {
+      "source": "/api/seo-panel",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://app.chatwoot.com"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "_como_usar": "Tarifas nacionales del perfil general de envío. Edita aquí y corre: node scripts/envios.js aplicar --dry (previsualiza) y luego node scripts/envios.js aplicar. Los radios de entrega local (Barranquilla, hasta 50 km) NO se manejan por API: solo en el admin.",
+  "_provincias": "Códigos de departamento de Shopify: AMA Amazonas, ANT Antioquia, ARA Arauca, ATL Atlántico, DC Bogotá D.C., BOL Bolívar, BOY Boyacá, CAL Caldas, CAQ Caquetá, CAS Casanare, CAU Cauca, CES Cesar, CHO Chocó, COR Córdoba, CUN Cundinamarca, GUA Guainía, GUV Guaviare, HUI Huila, LAG La Guajira, MAG Magdalena, MET Meta, NAR Nariño, NSA Norte de Santander, PUT Putumayo, QUI Quindío, RIS Risaralda, SAP San Andrés y Providencia, SAN Santander, SUC Sucre, TOL Tolima, VAC Valle del Cauca, VAU Vaupés, VID Vichada.",
+  "_estado_2026_09_14": "El usuario dejó UNA sola zona nacional (todos los departamentos, incluido Atlántico) con la tarifa por importe del pedido. En Barranquilla el cliente ve también los radios de entrega local (más baratos) y elige esa.",
+  "moneda": "COP",
+  "zonas": [
+    {
+      "nombre": "Envios nacionales",
+      "tarifa": "Envío Principales",
+      "provincias": ["AMA", "ANT", "ARA", "ATL", "DC", "BOL", "BOY", "CAL", "CAQ", "CAS", "CAU", "CES", "CHO", "COR", "CUN", "GUA", "GUV", "HUI", "LAG", "MAG", "MET", "NAR", "NSA", "PUT", "QUI", "RIS", "SAP", "SAN", "SUC", "TOL", "VAC", "VAU", "VID"],
+      "rangos": [
+        { "hasta": 150000, "precio": 25000 },
+        { "hasta": 400000, "precio": 32000 },
+        { "hasta": null, "precio": 38000 }
+      ]
+    }
+  ]
+}

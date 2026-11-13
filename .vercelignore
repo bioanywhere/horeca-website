@@ -1,0 +1,8 @@
+# El worker no se despliega en Vercel: vive en Fly, porque un turno de Opus no
+# cabe en el reloj de una funcion. Se excluye para no subir su imagen ni su
+# configuracion en cada despliegue del sitio.
+worker/
+Dockerfile.worker
+fly.toml
+pruebas/
+tema/

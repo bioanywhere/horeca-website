@@ -1,0 +1,23 @@
+{
+  "name": "horeca-asesor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Asesor de compra por lenguaje natural para horecacenter.co: web (App Proxy de Shopify) y WhatsApp (Cloud API de Meta). Es el unico sitio donde puede estar la clave de Anthropic.",
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "mammoth": "^1.8.0",
+    "pdfkit": "^0.15.2",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5",
+    "zod": "^4.5.4"
+  },
+  "scripts": {
+    "bd:aplicar": "node bd/aplicar.js",
+    "worker": "node worker/index.js"
+  }
+}

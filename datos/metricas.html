@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Desempeño de Camila</title>
+<style>
+  :root {
+    --fondo:#f7f9fb; --tarjeta:#fff; --tinta:#1f2d3d; --suave:#637389; --linea:#e3e8ef; --enlace:#1f6fd6;
+    --ok-fondo:#e4f6ec; --ok-tinta:#17683e; --esp-fondo:#fff4d6; --esp-tinta:#8a5a00;
+    --mal-fondo:#fde8e8; --mal-tinta:#9b1c1c; --acento:#1f6fd6;
+  }
+  :root[data-theme="dark"] {
+    --fondo:#151a21; --tarjeta:#1d242d; --tinta:#e6ebf1; --suave:#93a3b8; --linea:#2c3643; --enlace:#6aa8ff;
+    --ok-fondo:#173a28; --ok-tinta:#7fdca6; --esp-fondo:#3d3113; --esp-tinta:#f3c96b;
+    --mal-fondo:#3f1d1d; --mal-tinta:#f5a3a3; --acento:#6aa8ff;
+  }
+  * { box-sizing:border-box; } html, body { margin:0; }
+  body { background:var(--fondo); color:var(--tinta); font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; padding:14px; }
+  main { display:grid; gap:12px; max-width:760px; }
+  section { background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; padding:12px 14px; }
+  h1 { font-size:16px; margin:0; text-wrap:balance; }
+  h2 { font-size:11px; margin:0 0 10px; color:var(--suave); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  .sub { color:var(--suave); margin-top:2px; }
+  .cifras { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+  .cifra { border:1px solid var(--linea); border-radius:6px; padding:9px 11px; }
+  .cifra b { display:block; font-size:20px; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .cifra span { color:var(--suave); font-size:11px; }
+  .cifra small { color:var(--suave); font-size:10px; display:block; margin-top:2px; }
+  .destacado b { color:var(--acento); }
+  table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  th, td { text-align:right; padding:6px 8px; border-top:1px solid var(--linea); }
+  th:first-child, td:first-child { text-align:left; }
+  thead th { border-top:0; color:var(--suave); font-weight:600; font-size:11px; }
+  td.rotulo { color:var(--suave); font-weight:500; }
+  .barra { height:8px; border-radius:999px; background:var(--linea); overflow:hidden; margin-top:6px; }
+  .barra i { display:block; height:100%; background:var(--ok-tinta); }
+  .costo-barra { flex:1; min-width:4px; background:var(--acento, #1f6fd6); border-radius:2px 2px 0 0; opacity:.85; }
+  .estado { color:var(--suave); padding:24px 4px; }
+  footer { color:var(--suave); font-size:11px; }
+  @media (prefers-reduced-motion:no-preference) { section { animation:entra .18s ease-out; } }
+  @keyframes entra { from { opacity:0; transform:translateY(3px); } }
+</style>
+</head>
+<body>
+<main id="raiz"><p class="estado">Cargando métricas…</p></main>
+
+<script>
+(function () {
+  'use strict';
+  var raiz = document.getElementById('raiz');
+  var clave = new URLSearchParams(location.search).get('k') || '';
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  var dinero = new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 });
+  function plata(n) { return n == null ? '—' : dinero.format(Number(n)); }
+  function tiempo(seg) {
+    if (!seg) return '—';
+    if (seg < 60) return seg + ' s';
+    return (seg / 60).toFixed(1) + ' min';
+  }
+  function pct(a, b) { return b > 0 ? Math.round((a / b) * 100) : 0; }
+
+  function aviso(t) { raiz.innerHTML = '<p class="estado">' + esc(t) + '</p>'; }
+
+  function pintar(d) {
+    if (d.sinBase) return aviso('La base de datos no está configurada.');
+    var t = d.turnos || {}, cl = d.clientes || {}, ca = d.carritos || {};
+    var partes = [];
+
+    partes.push('<section><h1>Desempeño de Camila</h1>' +
+      '<p class="sub">Atención automática por WhatsApp · actualizado ' +
+      esc(new Date(d.generado).toLocaleString('es-CO', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' })) + '</p></section>');
+
+    // Cifras destacadas (semana)
+    var sem = t.semana || {};
+    var res = d.resueltas || {};
+    partes.push('<section><h2>Esta semana (7 días)</h2><div class="cifras">' +
+      '<div class="cifra destacado"><b>' + (sem.atendidos || 0) + '</b><span>turnos atendidos</span></div>' +
+      '<div class="cifra destacado"><b>' + (res.semana || 0) + '</b><span>conversaciones resueltas</span></div>' +
+      '<div class="cifra"><b>' + (cl.semana || 0) + '</b><span>clientes únicos</span></div>' +
+      '<div class="cifra"><b>' + (sem.traspasos || 0) + '</b><span>pasados a un asesor</span></div>' +
+      '<div class="cifra"><b>' + tiempo(d.respuesta_seg_prom) + '</b><span>respuesta promedio</span></div>' +
+      '</div></section>');
+
+    // Tabla por ventana
+    function fila(rot, o) {
+      o = o || {};
+      var fall = (o.atendidos || 0) + (o.fallidos || 0);
+      return '<tr><td class="rotulo">' + rot + '</td>' +
+        '<td>' + (o.atendidos || 0) + '</td>' +
+        '<td>' + (o.traspasos || 0) + '</td>' +
+        '<td>' + (o.fallidos || 0) + '</td>' +
+        '<td>' + (fall ? pct(o.atendidos || 0, fall) + '%' : '—') + '</td></tr>';
+    }
+    partes.push('<section><h2>Turnos por periodo</h2><table>' +
+      '<thead><tr><th>Periodo</th><th>Atendidos</th><th>A asesor</th><th>Fallidos</th><th>Éxito</th></tr></thead><tbody>' +
+      fila('Hoy', t.hoy) + fila('7 días', t.semana) + fila('30 días', t.mes) +
+      '</tbody></table></section>');
+
+    // Carritos
+    var recPct = pct(ca.comprados_mes || 0, ca.armados_mes || 0);
+    partes.push('<section><h2>Carritos (30 días)</h2><div class="cifras">' +
+      '<div class="cifra"><b>' + (ca.armados_mes || 0) + '</b><span>armados por Camila</span></div>' +
+      '<div class="cifra"><b>' + (ca.comprados_mes || 0) + '</b><span>terminaron en compra</span></div>' +
+      '<div class="cifra destacado"><b>' + plata(ca.valor_mes) + '</b><span>valor recuperado</span></div>' +
+      '</div>' +
+      '<div class="barra" title="' + recPct + '% de conversión"><i style="width:' + recPct + '%"></i></div>' +
+      '<p class="sub">' + recPct + '% de los carritos armados terminó en compra (detección por teléfono, aproximada).</p>' +
+      '</section>');
+
+    // Anuncios (Click-to-WhatsApp)
+    var an = d.anuncios || {};
+    var camp = (an.campanas || []).filter(function (x) { return x.n > 0; });
+    partes.push('<section><h2>Anuncios (Click-to-WhatsApp)</h2><div class="cifras">' +
+      '<div class="cifra destacado"><b>' + (an.anuncio_sem || 0) + '</b><span>llegadas esta semana</span></div>' +
+      '<div class="cifra"><b>' + (an.anuncio_mes || 0) + '</b><span>llegadas en 30 días</span></div>' +
+      '</div>' +
+      (camp.length
+        ? '<table style="margin-top:10px"><thead><tr><th>Campaña</th><th>Personas (30d)</th></tr></thead><tbody>' +
+          camp.map(function (x) { return '<tr><td class="rotulo">' + esc(x.campana) + '</td><td>' + x.n + '</td></tr>'; }).join('') +
+          '</tbody></table>'
+        : '<p class="sub" style="margin-top:8px">Sin llegadas de anuncios todavía. Aparecen cuando alguien escribe desde un anuncio con la etiqueta de campaña.</p>') +
+      '</section>');
+
+    // Costo de IA por persona
+    var co = d.costos;
+    if (co) {
+      var usd = function (n) { return 'US$ ' + Number(n || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: n < 1 ? 3 : 2 }); };
+      var cop = function (n) { return plata(n); };
+      var filas = (co.personas || []).map(function (p) {
+        var quien = p.telefono ? (p.nombre ? esc(p.nombre) + ' <span class="sub">+' + esc(p.telefono) + '</span>' : '+' + esc(p.telefono)) : 'Web · cliente ' + esc(String(p.persona).replace('web:', '')).slice(0, 14);
+        return '<tr><td class="rotulo">' + quien + '</td><td>' + esc(p.canal) + '</td><td>' + p.turnos + '</td><td>' + usd(p.costo) + '</td><td>' + usd(p.turnos ? p.costo / p.turnos : 0) + '</td><td>' + (p.carritos || 0) + '</td><td>' + (p.comprados || 0) + (p.valor_comprado ? ' <span class="sub">(' + cop(p.valor_comprado) + ')</span>' : '') + '</td></tr>';
+      }).join('');
+      var maxDia = Math.max.apply(null, (co.por_dia || []).map(function (x) { return x.costo; }).concat([0.0001]));
+      var barras = (co.por_dia || []).map(function (x) { return '<div title="' + esc(x.dia) + ': ' + usd(x.costo) + ' · ' + x.turnos + ' turnos" style="height:' + Math.max(3, 100 * x.costo / maxDia) + '%"></div>'; }).join('');
+      partes.push('<section><h2>Costo de IA (Anthropic) · 30 días</h2><div class="cifras">' +
+        '<div class="cifra destacado"><b>' + usd(co.mes) + '</b><span>gastado en 30 días</span></div>' +
+        '<div class="cifra"><b>' + usd(co.semana) + '</b><span>últimos 7 días</span></div>' +
+        '<div class="cifra"><b>' + usd(co.costo_turno) + '</b><span>por turno atendido</span></div>' +
+        '<div class="cifra"><b>' + usd(co.costo_persona) + '</b><span>por persona atendida</span></div>' +
+        '<div class="cifra"><b>' + usd(co.costo_carrito) + '</b><span>por carrito armado</span></div>' +
+        '<div class="cifra"><b>' + (co.costo_compra ? usd(co.costo_compra) : '—') + '</b><span>por compra detectada</span></div>' +
+        '</div>' +
+        (barras ? '<div style="display:flex;align-items:flex-end;gap:3px;height:60px;margin:12px 0 4px">' + barras.replace(/<div /g, '<div class="costo-barra" ') + '</div><p class="sub">Costo diario, últimos 14 días (hora de Colombia).</p>' : '') +
+        '<p class="sub">' + (co.turnos_mes || 0) + ' turnos · ' + (co.personas_mes || 0) + ' personas · ' + Number(co.tokens_mes || 0).toLocaleString('es-CO') + ' tokens (' + (co.tokens_mes ? Math.round(100 * co.cache_mes / co.tokens_mes) : 0) + '% leídos de caché). Modelo actual: Haiku 4.5.</p>' +
+        (filas ? '<table style="margin-top:10px"><thead><tr><th>Persona</th><th>Canal</th><th>Turnos</th><th>Costo</th><th>Por turno</th><th>Carritos</th><th>Compras</th></tr></thead><tbody>' + filas + '</tbody></table>'
+               : '<p class="sub" style="margin-top:8px">Todavía no hay turnos medidos. Se registran desde el despliegue de la medición por turno.</p>') +
+        '</section>');
+    }
+
+    var bf = d.busquedasFallidas;
+    if (bf) {
+      var ROT = { sin_coincidencia: 'Sin coincidencia', todos_agotados: 'Todo agotado', sin_resultados: 'Sin resultados' };
+      var filasBf = (bf.filas || []).map(function (f) {
+        var ej = (f.ejemplos || []).map(esc).join('<br>');
+        return '<tr><td class="rotulo">' + esc(f.consulta) + '</td><td>' + f.veces + '</td><td>' + f.personas + '</td><td>' + esc(ROT[f.resultado] || f.resultado) + '</td><td class="sub">' + ej + '</td><td class="sub">' + esc(String(f.ultima || '').slice(0, 10)) + '</td></tr>';
+      }).join('');
+      partes.push('<section><h2>Búsquedas sin resultado útil · ' + (bf.dias || 7) + ' días</h2>' +
+        '<p class="sub">' + (bf.total || 0) + ' búsquedas de Camila que no encontraron el producto. «Sin coincidencia»: lo que devolvió no tiene que ver con lo pedido (candidata a nueva equivalencia). «Todo agotado»: existe pero sin stock. Revísala cada semana para ampliar las equivalencias.</p>' +
+        (filasBf ? '<table style="margin-top:10px"><thead><tr><th>Consulta</th><th>Veces</th><th>Personas</th><th>Tipo</th><th>Lo que devolvió</th><th>Última</th></tr></thead><tbody>' + filasBf + '</tbody></table>'
+                 : '<p class="sub" style="margin-top:8px">Sin registros todavía: se guardan desde el 29 de septiembre.</p>') +
+        '</section>');
+    }
+
+    partes.push('<footer>«Atendidos» = turnos respondidos por Camila · «A asesor» = traspasos a una persona · «Éxito» = atendidos ÷ (atendidos + fallidos). Los carritos se miden desde que se activó la recuperación.</footer>');
+    raiz.innerHTML = partes.join('');
+  }
+
+  function cargar() {
+    aviso('Cargando métricas…');
+    fetch(location.pathname + '?datos=1&k=' + encodeURIComponent(clave), { cache:'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('No pude consultar (error ' + r.status + ').'); return r.json(); })
+      .then(pintar)
+      .catch(function (e) { aviso(e.message); });
+  }
+
+  window.addEventListener('message', function (ev) {
+    var msg = ev.data;
+    if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch (e) { return; } }
+    if (!msg || msg.event !== 'appContext' || !msg.data) return;
+    document.documentElement.setAttribute('data-theme', msg.data.theme === 'dark' ? 'dark' : 'light');
+  });
+
+  if (window.parent !== window) window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+  cargar();
+  setInterval(cargar, 5 * 60 * 1000); // refresco suave cada 5 min
+})();
+</script>
+</body>
+</html>

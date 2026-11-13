@@ -1,0 +1,13 @@
+# Worker del asesor de WhatsApp (Fly, app horeca-whatsapp).
+# Reconstruido el 2026-10-21 a partir del historial de la imagen
+# deployment-01M3YRSNX82981XG2GSFR0PTHP (base node:24-bookworm, Node 24.21).
+FROM node:24-bookworm
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev || npm install --omit=dev
+COPY lib ./lib
+COPY datos ./datos
+COPY worker ./worker
+COPY seo ./seo
+ENV NODE_ENV=production
+CMD ["node", "worker/index.js"]

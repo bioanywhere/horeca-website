@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Cliente Horeca</title>
+<style>
+  :root {
+    --fondo: #f7f9fb;
+    --tarjeta: #ffffff;
+    --tinta: #1f2d3d;
+    --suave: #637389;
+    --linea: #e3e8ef;
+    --enlace: #1f6fd6;
+    --sello: #ffc93c;
+    --sello-tinta: #3d2e00;
+    --ok-fondo: #e4f6ec; --ok-tinta: #17683e;
+    --esp-fondo: #fff4d6; --esp-tinta: #8a5a00;
+    --mal-fondo: #fde8e8; --mal-tinta: #9b1c1c;
+    --neutro-fondo: #eef1f5; --neutro-tinta: #4a5a70;
+  }
+  :root[data-theme="dark"] {
+    --fondo: #151a21;
+    --tarjeta: #1d242d;
+    --tinta: #e6ebf1;
+    --suave: #93a3b8;
+    --linea: #2c3643;
+    --enlace: #6aa8ff;
+    --ok-fondo: #173a28; --ok-tinta: #7fdca6;
+    --esp-fondo: #3d3113; --esp-tinta: #f3c96b;
+    --mal-fondo: #3f1d1d; --mal-tinta: #f5a3a3;
+    --neutro-fondo: #27303b; --neutro-tinta: #b3c0d0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--fondo);
+    color: var(--tinta);
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 14px;
+  }
+  main { display: grid; gap: 12px; max-width: 760px; }
+  section {
+    background: var(--tarjeta);
+    border: 1px solid var(--linea);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  h1 { font-size: 16px; margin: 0; text-wrap: balance; }
+  h2 {
+    font-size: 11px; margin: 0 0 8px; color: var(--suave);
+    text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+  }
+  a { color: var(--enlace); text-decoration: none; }
+  a:hover, a:focus-visible { text-decoration: underline; }
+  a:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; border-radius: 2px; }
+  .cabeza { display: flex; justify-content: space-between; align-items: start; gap: 10px; flex-wrap: wrap; }
+  .sub { color: var(--suave); margin-top: 2px; }
+  .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-top: 12px; }
+  .cifra { border: 1px solid var(--linea); border-radius: 6px; padding: 8px 10px; }
+  .cifra b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .cifra span { color: var(--suave); font-size: 11px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+  .chip {
+    font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: var(--neutro-fondo); color: var(--neutro-tinta); white-space: nowrap;
+  }
+  .chip.ok { background: var(--ok-fondo); color: var(--ok-tinta); }
+  .chip.esp { background: var(--esp-fondo); color: var(--esp-tinta); }
+  .chip.mal { background: var(--mal-fondo); color: var(--mal-tinta); }
+  .chip.sello { background: var(--sello); color: var(--sello-tinta); font-weight: 600; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+  dt { color: var(--suave); }
+  dd { margin: 0; overflow-wrap: anywhere; }
+  .pedido { border-top: 1px solid var(--linea); padding: 9px 0; }
+  .pedido:first-of-type { border-top: 0; padding-top: 0; }
+  .pedido-linea { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+  .total { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .items { color: var(--suave); margin: 4px 0 0; padding-left: 16px; }
+  .mensaje { padding: 6px 0; border-top: 1px dashed var(--linea); }
+  .mensaje:first-of-type { border-top: 0; }
+  .quien { font-size: 11px; font-weight: 600; color: var(--suave); }
+  .texto { white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .vacio { color: var(--suave); }
+  .estado { color: var(--suave); padding: 24px 4px; }
+  .nota { background: var(--esp-fondo); color: var(--esp-tinta); border-radius: 6px; padding: 8px 10px; margin-top: 10px; white-space: pre-wrap; }
+  footer { color: var(--suave); font-size: 11px; }
+  @media (prefers-reduced-motion: no-preference) { section { animation: entra .18s ease-out; } }
+  @keyframes entra { from { opacity: 0; transform: translateY(3px); } }
+</style>
+</head>
+<body>
+<main id="raiz"><p class="estado">Esperando la conversación de Chatwoot…</p></main>
+
+<script>
+(function () {
+  'use strict';
+
+  var raiz = document.getElementById('raiz');
+  var clave = new URLSearchParams(location.search).get('k') || '';
+  var ultimaBusqueda = '';
+
+  /* Todo lo que viene de Shopify o del chat pasa por aqui antes de tocar el
+     HTML: un nombre de cliente con «<script>» no puede ejecutarse en la
+     pantalla de un agente. */
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  var dinero = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+  function plata(m) { return m && m.amount != null ? dinero.format(Number(m.amount)) : '—'; }
+  function fecha(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function haceCuanto(iso) {
+    if (!iso) return '';
+    var min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (min < 60) return 'hace ' + Math.max(1, min) + ' min';
+    var h = Math.round(min / 60);
+    if (h < 48) return 'hace ' + h + ' h';
+    return 'hace ' + Math.round(h / 24) + ' días';
+  }
+
+  var PAGO = {
+    PAID: ['Pagado', 'ok'], PENDING: ['Pago pendiente', 'esp'], AUTHORIZED: ['Autorizado', 'esp'],
+    PARTIALLY_PAID: ['Pago parcial', 'esp'], REFUNDED: ['Reembolsado', 'mal'],
+    PARTIALLY_REFUNDED: ['Reembolso parcial', 'mal'], VOIDED: ['Anulado', 'mal'], EXPIRED: ['Vencido', 'mal']
+  };
+  var DESPACHO = {
+    FULFILLED: ['Despachado', 'ok'], UNFULFILLED: ['Sin despachar', 'esp'],
+    PARTIALLY_FULFILLED: ['Despacho parcial', 'esp'], IN_PROGRESS: ['En preparación', 'esp'],
+    ON_HOLD: ['En espera', 'esp'], SCHEDULED: ['Programado', 'esp'], RESTOCKED: ['Devuelto', 'mal']
+  };
+  function chip(tabla, valor) {
+    var t = tabla[valor] || [String(valor || '—').toLowerCase().replace(/_/g, ' '), ''];
+    return '<span class="chip ' + t[1] + '">' + esc(t[0]) + '</span>';
+  }
+
+  var FISCAL = {
+    tipo_persona: 'Tipo de persona', tipo_documento: 'Documento', numero_documento: 'Número',
+    dv: 'DV', razon_social: 'Razón social', responsabilidad_fiscal: 'Responsabilidad',
+    correo_fe: 'Correo factura'
+  };
+  var MEMORIA = { nombre: 'Nombre', negocio: 'Negocio', tipo_negocio: 'Negocio', ciudad: 'Ciudad', preferencia: 'Preferencia' };
+
+  function admin(tienda, ruta) { return 'https://admin.shopify.com/store/' + encodeURIComponent(tienda) + '/' + ruta; }
+
+  function pintar(d) {
+    var c = d.cliente, partes = [];
+
+    if (c) {
+      var fiscal = Object.keys(c.fiscal || {});
+      partes.push(
+        '<section><div class="cabeza"><div>' +
+          '<h1>' + esc(c.nombre || 'Cliente sin nombre') + '</h1>' +
+          '<div class="sub">' + esc([c.telefono, c.correo].filter(Boolean).join(' · ')) + '</div>' +
+        '</div><a href="' + admin(d.tienda, 'customers/' + c.id) + '" target="_blank" rel="noopener">Abrir en Shopify ↗</a></div>' +
+        '<div class="cifras">' +
+          '<div class="cifra"><b>' + c.pedidos + '</b><span>pedidos</span></div>' +
+          '<div class="cifra"><b>' + plata(c.gastado) + '</b><span>comprado en total</span></div>' +
+          '<div class="cifra"><b>' + fecha(c.desde) + '</b><span>cliente desde</span></div>' +
+        '</div>' +
+        ((c.etiquetas || []).length || fiscal.length
+          ? '<div class="chips">' +
+              (fiscal.length ? '<span class="chip sello">Datos DIAN</span>' : '') +
+              (c.etiquetas || []).map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') +
+            '</div>'
+          : '') +
+        (c.nota ? '<div class="nota">' + esc(c.nota) + '</div>' : '') +
+        '</section>'
+      );
+
+      partes.push('<section><h2>Pedidos recientes</h2>' + (d.pedidos.length
+        ? d.pedidos.map(function (o) {
+            return '<div class="pedido"><div class="pedido-linea">' +
+              '<a href="' + admin(d.tienda, 'orders/' + o.id) + '" target="_blank" rel="noopener"><b>' + esc(o.nombre) + '</b></a>' +
+              '<span class="sub">' + fecha(o.fecha) + '</span>' +
+              '<span class="total">' + plata(o.total) + '</span></div>' +
+              '<div class="chips">' + chip(PAGO, o.pago) + chip(DESPACHO, o.despacho) + '</div>' +
+              (o.lineas.length ? '<ul class="items">' + o.lineas.map(function (l) {
+                return '<li>' + esc(l.cantidad) + ' × ' + esc(l.titulo) + '</li>';
+              }).join('') + '</ul>' : '') +
+              '</div>';
+          }).join('')
+        : '<p class="vacio">Todavía no tiene pedidos en la tienda.</p>') + '</section>');
+
+      if (fiscal.length) {
+        partes.push('<section><h2>Datos para factura electrónica</h2><dl>' +
+          fiscal.map(function (k) { return '<dt>' + esc(FISCAL[k] || k) + '</dt><dd>' + esc(c.fiscal[k]) + '</dd>'; }).join('') +
+          '</dl></section>');
+      }
+    } else {
+      partes.push('<section><h1>No está registrado en la tienda</h1>' +
+        '<p class="sub">Busqué ' + esc([d.buscado.telefono, d.buscado.correo].filter(Boolean).join(' y ') || 'sin datos') +
+        ' entre los clientes de Shopify y no aparece. Puede ser un cliente nuevo, o estar registrado con otro número.</p></section>');
+    }
+
+    var a = d.asesor;
+    if (a) {
+      var mem = Object.keys(a.memoria || {});
+      partes.push('<section><h2>Lo que sabe el asesor de WhatsApp</h2>' +
+        (mem.length
+          ? '<dl>' + mem.map(function (k) { return '<dt>' + esc(MEMORIA[k] || k.replace(/_/g, ' ')) + '</dt><dd>' + esc(a.memoria[k]) + '</dd>'; }).join('') + '</dl>'
+          : '<p class="vacio">No ha anotado nada de este cliente todavía.</p>') +
+        '</section>');
+
+      if ((a.mensajes || []).length) {
+        partes.push('<section><h2>Últimos mensajes con el asesor · ' + esc(haceCuanto(a.ultimaVez)) + '</h2>' +
+          a.mensajes.map(function (m) {
+            return '<div class="mensaje"><div class="quien">' + (m.rol === 'cliente' ? 'Cliente' : 'Asesor') +
+              ' · ' + esc(haceCuanto(m.creado)) + '</div><div class="texto">' + esc(m.texto) + '</div></div>';
+          }).join('') + '</section>');
+      }
+    }
+
+    if (c) partes.push('<footer>Encontrado por ' + esc(d.encontradoPor) + '. Shopify solo deja ver los pedidos de los últimos 60 días.</footer>');
+    raiz.innerHTML = partes.join('');
+  }
+
+  function aviso(texto) { raiz.innerHTML = '<p class="estado">' + esc(texto) + '</p>'; }
+
+  function buscar(contacto) {
+    var tel = (contacto && contacto.phone_number) || '';
+    var correo = (contacto && contacto.email) || '';
+    if (!tel && !correo) return aviso('Este contacto no tiene teléfono ni correo: no hay con qué buscarlo en la tienda.');
+
+    /* Chatwoot reenvía el contexto a menudo (al cambiar de tema, al editar
+       atributos). Solo se consulta de nuevo si cambió la persona. */
+    var clave_busqueda = tel + '|' + correo;
+    if (clave_busqueda === ultimaBusqueda) return;
+    ultimaBusqueda = clave_busqueda;
+
+    aviso('Buscando en Shopify…');
+    var url = location.pathname + '?datos=1&k=' + encodeURIComponent(clave) +
+      '&tel=' + encodeURIComponent(tel) + '&correo=' + encodeURIComponent(correo);
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (r.status === 429) throw new Error('Demasiadas consultas en esta hora. Espera unos minutos.');
+        if (!r.ok) throw new Error('No pude consultar la tienda (error ' + r.status + '). Vuelve a abrir la pestaña.');
+        return r.json();
+      })
+      .then(pintar)
+      .catch(function (e) { ultimaBusqueda = ''; aviso(e.message); });
+  }
+
+  window.addEventListener('message', function (ev) {
+    var msg = ev.data;
+    if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch (e) { return; } }
+    if (!msg || msg.event !== 'appContext' || !msg.data) return;
+    document.documentElement.setAttribute('data-theme', msg.data.theme === 'dark' ? 'dark' : 'light');
+    buscar(msg.data.contact);
+  });
+
+  /* Pedir el contexto en cuanto la pagina carga: si la pestaña ya estaba
+     abierta, Chatwoot no lo vuelve a mandar por su cuenta. */
+  if (window.parent !== window) window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+  else aviso('Esta página se abre dentro de Chatwoot, en la pestaña de la conversación.');
+})();
+</script>
+</body>
+</html>

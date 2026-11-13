@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Recuperación de carrito</title>
+<style>
+  :root {
+    --fondo:#f7f9fb; --tarjeta:#fff; --tinta:#1f2d3d; --suave:#637389; --linea:#e3e8ef; --enlace:#1f6fd6;
+    --ok-fondo:#e4f6ec; --ok-tinta:#17683e; --esp-fondo:#fff4d6; --esp-tinta:#8a5a00;
+    --mal-fondo:#fde8e8; --mal-tinta:#9b1c1c; --neutro-fondo:#eef1f5; --neutro-tinta:#4a5a70;
+  }
+  :root[data-theme="dark"] {
+    --fondo:#151a21; --tarjeta:#1d242d; --tinta:#e6ebf1; --suave:#93a3b8; --linea:#2c3643; --enlace:#6aa8ff;
+    --ok-fondo:#173a28; --ok-tinta:#7fdca6; --esp-fondo:#3d3113; --esp-tinta:#f3c96b;
+    --mal-fondo:#3f1d1d; --mal-tinta:#f5a3a3; --neutro-fondo:#27303b; --neutro-tinta:#b3c0d0;
+  }
+  * { box-sizing:border-box; } html, body { margin:0; }
+  body { background:var(--fondo); color:var(--tinta); font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; padding:14px; }
+  main { display:grid; gap:12px; max-width:760px; }
+  section { background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; padding:12px 14px; }
+  h1 { font-size:16px; margin:0; text-wrap:balance; }
+  h2 { font-size:11px; margin:0 0 8px; color:var(--suave); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  a { color:var(--enlace); text-decoration:none; overflow-wrap:anywhere; }
+  a:hover, a:focus-visible { text-decoration:underline; }
+  .sub { color:var(--suave); margin-top:2px; }
+  .cifras { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; }
+  .cifra { border:1px solid var(--linea); border-radius:6px; padding:8px 10px; }
+  .cifra b { display:block; font-size:15px; font-variant-numeric:tabular-nums; }
+  .cifra span { color:var(--suave); font-size:11px; }
+  .chip { font-size:11px; padding:2px 8px; border-radius:999px; background:var(--neutro-fondo); color:var(--neutro-tinta); white-space:nowrap; }
+  .chip.ok { background:var(--ok-fondo); color:var(--ok-tinta); }
+  .chip.esp { background:var(--esp-fondo); color:var(--esp-tinta); }
+  .chip.mal { background:var(--mal-fondo); color:var(--mal-tinta); }
+  .carrito { border-top:1px solid var(--linea); padding:10px 0; }
+  .carrito:first-of-type { border-top:0; padding-top:0; }
+  .linea { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:baseline; }
+  .total { font-variant-numeric:tabular-nums; font-weight:600; }
+  .vacio { color:var(--suave); }
+  .acciones { display:flex; gap:10px; align-items:center; margin-top:6px; flex-wrap:wrap; }
+  .btn { font:inherit; font-size:12px; padding:3px 10px; border:1px solid var(--linea); border-radius:6px; background:var(--tarjeta); color:var(--enlace); cursor:pointer; }
+  .btn:hover { background:var(--neutro-fondo); }
+  .btn:disabled { opacity:.6; cursor:default; }
+  .estado { color:var(--suave); padding:24px 4px; }
+  footer { color:var(--suave); font-size:11px; }
+  @media (prefers-reduced-motion:no-preference) { section { animation:entra .18s ease-out; } }
+  @keyframes entra { from { opacity:0; transform:translateY(3px); } }
+</style>
+</head>
+<body>
+<main id="raiz"><p class="estado">Esperando la conversación de Chatwoot…</p></main>
+
+<script>
+(function () {
+  'use strict';
+  var raiz = document.getElementById('raiz');
+  var clave = new URLSearchParams(location.search).get('k') || '';
+  var ultima = '';
+  var contactoActual = null;
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  var dinero = new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 });
+  function plata(n) { return n == null ? '—' : dinero.format(Number(n)); }
+  function haceCuanto(iso) {
+    if (!iso) return '';
+    var min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (min < 60) return 'hace ' + Math.max(1, min) + ' min';
+    var h = Math.round(min / 60);
+    if (h < 48) return 'hace ' + h + ' h';
+    return 'hace ' + Math.round(h / 24) + ' días';
+  }
+  var ESTADOS = {
+    pendiente: ['Pendiente', 'esp'], recordado: ['Recordado', ''], comprado: ['Comprado ✓', 'ok'],
+    cerrado: ['Cerrado', ''], descartado: ['Reemplazado', ''], error: ['Falló el aviso', 'mal']
+  };
+  function chip(estado) {
+    var t = ESTADOS[estado] || [String(estado || '—'), ''];
+    return '<span class="chip ' + t[1] + '">' + esc(t[0]) + '</span>';
+  }
+
+  function pintar(d) {
+    var partes = [];
+    var r = d.resumen || {};
+    partes.push('<section><h2>Recuperación · últimos 30 días</h2><div class="cifras">' +
+      '<div class="cifra"><b>' + (r.pendiente || 0) + '</b><span>por recordar</span></div>' +
+      '<div class="cifra"><b>' + (r.recordado || 0) + '</b><span>recordados</span></div>' +
+      '<div class="cifra"><b>' + (r.comprado || 0) + '</b><span>recuperados</span></div>' +
+      '</div></section>');
+
+    var cs = d.carritos || [];
+    partes.push('<section><h2>Carritos de este contacto</h2>' + (cs.length
+      ? cs.map(function (c) {
+          return '<div class="carrito">' +
+            '<div class="linea">' + chip(c.estado) +
+              '<span class="total">' + plata(c.total) + '</span></div>' +
+            '<div class="sub">Armado ' + esc(haceCuanto(c.creado)) +
+              (c.recordado_en ? ' · recordado ' + esc(haceCuanto(c.recordado_en)) : '') + '</div>' +
+            '<div class="acciones"><a href="' + esc(c.enlace) + '" target="_blank" rel="noopener">Abrir carrito ↗</a>' +
+              ((c.estado === 'pendiente' || c.estado === 'recordado')
+                ? '<button class="btn" data-id="' + esc(c.id) + '">Recordar ahora</button>' : '') +
+            '</div></div>';
+        }).join('')
+      : '<p class="vacio">Este contacto no tiene carritos guardados todavía. Se guardan cuando Camila arma un pedido con enlace.</p>') +
+      '</section>');
+
+    partes.push('<footer>«Pendiente» = por recordar dentro de 24 h · «Recordado» = ya se le avisó · «Recuperados» = compraron después. La detección de compra es aproximada (por teléfono).</footer>');
+    raiz.innerHTML = partes.join('');
+  }
+
+  function aviso(t) { raiz.innerHTML = '<p class="estado">' + esc(t) + '</p>'; }
+
+  function cargar(contacto, forzar) {
+    contactoActual = contacto || contactoActual;
+    var tel = (contactoActual && contactoActual.phone_number) || '';
+    if (!tel) return aviso('Este contacto no tiene teléfono: no hay carritos que buscar.');
+    if (tel === ultima && !forzar) return;
+    ultima = tel;
+    aviso('Buscando carritos…');
+    var url = location.pathname + '?datos=1&k=' + encodeURIComponent(clave) + '&tel=' + encodeURIComponent(tel);
+    fetch(url, { cache:'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('No pude consultar (error ' + r.status + ').'); return r.json(); })
+      .then(pintar)
+      .catch(function (e) { ultima = ''; aviso(e.message); });
+  }
+
+  window.addEventListener('message', function (ev) {
+    var msg = ev.data;
+    if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch (e) { return; } }
+    if (!msg || msg.event !== 'appContext' || !msg.data) return;
+    document.documentElement.setAttribute('data-theme', msg.data.theme === 'dark' ? 'dark' : 'light');
+    cargar(msg.data.contact);
+  });
+
+  /* Botón «Recordar ahora»: delegación en la raíz (sobrevive a los re-render). */
+  raiz.addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('.btn') : null;
+    if (!b) return;
+    var id = Number(b.getAttribute('data-id'));
+    var orig = b.textContent;
+    b.disabled = true; b.textContent = 'Enviando…';
+    fetch(location.pathname + '?k=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok && res.j && res.j.ok) { b.textContent = '✓ Enviado'; setTimeout(function () { cargar(null, true); }, 900); }
+        else { b.disabled = false; b.textContent = orig; alert('No se pudo enviar' + (res.j && res.j.error ? ' (' + res.j.error + ')' : '') + '. Quizá ya pasaron las 24 h.'); }
+      })
+      .catch(function () { b.disabled = false; b.textContent = orig; alert('Error de red.'); });
+  });
+
+  if (window.parent !== window) window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+  else aviso('Esta página se abre dentro de Chatwoot, en la pestaña de la conversación.');
+})();
+</script>
+</body>
+</html>

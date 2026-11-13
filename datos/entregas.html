@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Entregas HORECA</title>
+<style>
+  :root {
+    --fondo:#f7f9fb; --tarjeta:#fff; --tinta:#1f2d3d; --suave:#637389; --linea:#e3e8ef; --enlace:#1f6fd6;
+    --ok-fondo:#e4f6ec; --ok-tinta:#17683e; --esp-fondo:#fff4d6; --esp-tinta:#8a5a00;
+    --mal-fondo:#fde8e8; --mal-tinta:#9b1c1c; --neutro-fondo:#eef1f5; --neutro-tinta:#4a5a70; --acento:#1f6fd6;
+    --wa-fondo:#e5ddd5; --wa-burbuja:#fff; --wa-tinta:#111b21; --wa-suave:#667781; --wa-boton:#00a5f4; --wa-var:#fff2a8;
+  }
+  :root[data-theme="dark"] {
+    --fondo:#151a21; --tarjeta:#1d242d; --tinta:#e6ebf1; --suave:#93a3b8; --linea:#2c3643; --enlace:#6aa8ff;
+    --ok-fondo:#173a28; --ok-tinta:#7fdca6; --esp-fondo:#3d3113; --esp-tinta:#f3c96b;
+    --mal-fondo:#3f1d1d; --mal-tinta:#f5a3a3; --neutro-fondo:#27303b; --neutro-tinta:#b3c0d0; --acento:#6aa8ff;
+    --wa-fondo:#0b141a; --wa-burbuja:#202c33; --wa-tinta:#e9edef; --wa-suave:#8696a0; --wa-boton:#53bdeb; --wa-var:#5a4d12;
+  }
+  * { box-sizing:border-box; } html, body { margin:0; }
+  [hidden] { display:none !important; }
+  body { background:var(--fondo); color:var(--tinta); font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; padding:14px; }
+  main { display:grid; gap:12px; max-width:980px; }
+  section { background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; padding:12px 14px; }
+  h1 { font-size:16px; margin:0; text-wrap:balance; }
+  h2 { font-size:11px; margin:0 0 10px; color:var(--suave); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  .sub { color:var(--suave); margin-top:2px; }
+  .cifras { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; }
+  .cifra { border:1px solid var(--linea); border-radius:6px; padding:9px 11px; }
+  .cifra b { display:block; font-size:19px; font-variant-numeric:tabular-nums; }
+  .cifra span { color:var(--suave); font-size:11px; }
+  .btn { font:inherit; font-weight:600; font-size:12px; padding:6px 12px; border:1px solid var(--acento); border-radius:6px; background:var(--acento); color:#fff; cursor:pointer; }
+  .btn.sec { background:transparent; color:var(--acento); }
+  .btn:disabled { opacity:.6; cursor:default; }
+  .chip { font-size:11px; padding:2px 8px; border-radius:999px; background:var(--neutro-fondo); color:var(--neutro-tinta); white-space:nowrap; }
+  .chip.ok { background:var(--ok-fondo); color:var(--ok-tinta); }
+  .chip.esp { background:var(--esp-fondo); color:var(--esp-tinta); }
+  .chip.mal { background:var(--mal-fondo); color:var(--mal-tinta); }
+  .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  .banner { border-radius:6px; padding:9px 11px; font-size:12px; }
+  .banner.warn { background:var(--esp-fondo); color:var(--esp-tinta); }
+  .banner.info { background:var(--neutro-fondo); color:var(--neutro-tinta); }
+  .vacio, .estado { color:var(--suave); }
+  .estado { padding:24px 4px; }
+  footer { color:var(--suave); font-size:11px; }
+  select, input[type=text], input[type=number] { font:inherit; padding:6px 8px; border:1px solid var(--linea); border-radius:6px; background:var(--fondo); color:var(--tinta); }
+  .dos { display:grid; grid-template-columns:minmax(300px,380px) 1fr; gap:14px; align-items:start; }
+  @media (max-width:760px) { .dos { grid-template-columns:1fr; } }
+
+  /* ── Previsualización estilo WhatsApp ── */
+  .wa { background:var(--wa-fondo); border-radius:12px; padding:14px 12px; }
+  .wa__burbuja { background:var(--wa-burbuja); color:var(--wa-tinta); border-radius:10px; max-width:340px; overflow:hidden; box-shadow:0 1px 1px rgba(0,0,0,.12); font-size:14px; line-height:1.4; }
+  .wa__mapa { position:relative; height:150px; background:#cfd8dc; }
+  .wa__mapa iframe { width:100%; height:100%; border:0; display:block; pointer-events:none; }
+  .wa__pin { position:absolute; left:50%; top:50%; transform:translate(-50%,-100%); font-size:26px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+  .wa__lugar { padding:8px 10px 6px; border-bottom:1px solid rgba(0,0,0,.06); }
+  .wa__lugar b { display:block; font-size:13.5px; }
+  .wa__lugar span { color:var(--wa-suave); font-size:12px; }
+  .wa__cuerpo { padding:8px 10px 4px; white-space:pre-wrap; word-break:break-word; }
+  .wa__pie { padding:0 10px 8px; color:var(--wa-suave); font-size:12px; }
+  .wa__hora { text-align:right; color:var(--wa-suave); font-size:11px; padding:0 10px 6px; }
+  .wa__btn { border-top:1px solid rgba(0,0,0,.08); text-align:center; color:var(--wa-boton); padding:10px; font-weight:500; }
+  .var { background:var(--wa-var); border-radius:3px; padding:0 2px; }
+  .leyenda { font-size:12px; color:var(--suave); margin-top:8px; }
+  .leyenda .var { color:var(--tinta); }
+  .ejemplo { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  .ejemplo label { font-size:11px; color:var(--suave); display:grid; gap:3px; }
+  .ejemplo input { width:100%; }
+  .ejemplo .ancho { grid-column:1 / -1; }
+
+  /* ── Lista ── */
+  .ent { border-top:1px solid var(--linea); padding:10px 0; }
+  .ent:first-of-type { border-top:0; }
+  .ent.sel { background:var(--neutro-fondo); margin:0 -14px; padding:10px 14px; border-radius:6px; }
+  .linea { display:flex; justify-content:space-between; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .acciones { display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; align-items:center; }
+  .acciones input[type=text] { width:150px; }
+  .msg { font-size:12px; margin-left:6px; }
+</style>
+</head>
+<body>
+<main id="raiz"><p class="estado">Cargando…</p></main>
+
+<script>
+(function () {
+  'use strict';
+  var raiz = document.getElementById('raiz');
+  var clave = new URLSearchParams(location.search).get('k') || '';
+  var datos = null;
+  var seleccion = null;             // entrega elegida para la previsualización (null = ejemplo)
+  var ejemplo = { lat: 10.9878, lng: -74.7889, nombre: 'Restaurante El Muelle', direccion: 'Cra 53 # 75-20, Barranquilla',
+    pedido: '#1002', cliente: 'Katherine Naranjo', telefono: '3135347177', indicaciones: 'Timbre 2, entregar en recepción',
+    contenido: '2 x Polvo abrasivo Super 500 g, 1 x Guante vinilo T-L', cobrar: 'Nada (pedido ya pagado)' };
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function hace(iso) {
+    if (!iso) return '';
+    var m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (m < 1) return 'ahora'; if (m < 60) return 'hace ' + m + ' min';
+    var h = Math.floor(m / 60); if (h < 24) return 'hace ' + h + ' h';
+    return 'hace ' + Math.floor(h / 24) + ' d';
+  }
+  var CLASE = { pendiente_pago:'esp', confirmada:'esp', asignada:'', notificada:'', aceptada:'ok', recogida:'ok', en_camino:'ok', entregada:'ok', cancelada:'mal' };
+  function chip(e) { return '<span class="chip ' + (CLASE[e] || '') + '">' + esc((datos && datos.etiquetas[e]) || e) + '</span>'; }
+  function aviso(t) { raiz.innerHTML = '<p class="estado">' + esc(t) + '</p>'; }
+  function negrita(s) { return s.replace(/\*([^*\n]+)\*/g, '<b>$1</b>'); }
+
+  /* Cuerpo de la plantilla con las variables sustituidas y resaltadas. */
+  function cuerpoRelleno(p) {
+    var vals = [p.pedido, p.cliente, p.direccion, p.telefonoCliente, p.indicaciones, p.contenido, p.cobrar];
+    var t = esc(datos.plantilla.cuerpo).replace(/\{\{(\d)\}\}/g, function (_, n) {
+      return '<span class="var" title="Variable {{' + n + '}} (dinámica por pedido)">' + esc(vals[n - 1] || '—') + '</span>';
+    });
+    return negrita(t);
+  }
+  function mapa(lat, lng) {
+    var d = 0.004;
+    var bbox = [lng - d, lat - d, lng + d, lat + d].map(function (x) { return x.toFixed(5); }).join(',');
+    return 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik';
+  }
+
+  function previsualizacion() {
+    var p, u;
+    if (seleccion) {
+      p = seleccion.parametros; u = p.ubicacion;
+    } else {
+      p = { pedido: ejemplo.pedido, cliente: ejemplo.cliente, direccion: ejemplo.direccion, telefonoCliente: ejemplo.telefono,
+        indicaciones: ejemplo.indicaciones, contenido: ejemplo.contenido, cobrar: ejemplo.cobrar };
+      u = { lat: Number(ejemplo.lat), lng: Number(ejemplo.lng), nombre: ejemplo.nombre, direccion: ejemplo.direccion };
+    }
+    var conMapa = u && isFinite(u.lat) && isFinite(u.lng);
+    var h = '<div class="wa"><div class="wa__burbuja">';
+    if (conMapa) {
+      h += '<div class="wa__mapa"><iframe loading="lazy" referrerpolicy="no-referrer" src="' + mapa(u.lat, u.lng) + '"></iframe><div class="wa__pin">📍</div></div>' +
+           '<div class="wa__lugar"><b><span class="var" title="name (dinámico)">' + esc(u.nombre) + '</span></b>' +
+           '<span><span class="var" title="address (dinámico)">' + esc(u.direccion) + '</span> · <span class="var" title="latitude, longitude (dinámicos)">' + Number(u.lat).toFixed(5) + ', ' + Number(u.lng).toFixed(5) + '</span></span></div>';
+    }
+    h += '<div class="wa__cuerpo">' + cuerpoRelleno(p) + '</div>' +
+         '<div class="wa__pie">' + esc(datos.plantilla.pie) + '</div>' +
+         '<div class="wa__hora">' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
+         '<div class="wa__btn">🔗 ' + esc(datos.plantilla.botones[0]) + '</div>' +
+         '<div class="wa__btn">↩ ' + esc(datos.plantilla.botones[1]) + '</div>' +
+         '</div></div>';
+    h += '<p class="leyenda"><span class="var">Resaltado</span> = dinámico en cada envío (header LOCATION: <span class="mono">latitude, longitude, name, address</span>; cuerpo: {{1}}…{{7}}; botón «Ver pedido»: enlace del pedido). ' +
+         'Plantilla <span class="mono">' + esc(datos.plantilla.nombre) + '</span> (' + esc(datos.plantilla.categoria) + '). Sin coordenadas fiables se usa <span class="mono">' + esc(datos.plantilla.fallback) + '</span> (mismo cuerpo, sin mapa).' +
+         (seleccion && !conMapa ? ' <b>Este pedido no trae coordenadas: saldría sin mapa.</b>' : '') + '</p>';
+    if (!seleccion) {
+      h += '<div class="ejemplo">' +
+        '<label>Latitud (ejemplo)<input type="number" step="0.00001" id="ej-lat" value="' + ejemplo.lat + '"></label>' +
+        '<label>Longitud (ejemplo)<input type="number" step="0.00001" id="ej-lng" value="' + ejemplo.lng + '"></label>' +
+        '<label class="ancho">Nombre del lugar<input type="text" id="ej-nombre" value="' + esc(ejemplo.nombre) + '"></label>' +
+        '<label class="ancho">Dirección<input type="text" id="ej-dir" value="' + esc(ejemplo.direccion) + '"></label>' +
+        '</div><p class="sub">Ubicación y datos de ejemplo solo para ver el diseño; en un pedido real salen de la orden de Shopify.</p>';
+    } else {
+      h += '<p class="sub">Mostrando el pedido <b>' + esc(seleccion.pedido_nombre) + '</b>. <a href="#" id="ver-ejemplo">Volver al ejemplo</a></p>';
+    }
+    return h;
+  }
+
+  function pintar(d) {
+    datos = d;
+    var c = d.config || {}, r = d.resumen || {}, ls = d.lista || [];
+    var partes = [];
+
+    partes.push('<section><h1>Entregas a domicilio</h1>' +
+      '<p class="sub">Cuando una compra queda confirmada (pagada o contra entrega) y va a domicilio, se asigna al domiciliario y se le avisa por WhatsApp con el mapa de la entrega; copia a gerencia.</p>' +
+      '<div class="acciones" style="margin-top:8px">' +
+        '<span class="chip">Domiciliario: ' + esc(c.domiciliarioNombre || '—') + ' ' + esc(c.domiciliario || '(sin configurar)') + '</span>' +
+        '<span class="chip">Copia: ' + esc(c.copia || '—') + '</span>' +
+        '<span class="chip ' + (c.plantillas ? 'ok' : 'mal') + '">Plantillas ' + (c.plantillas ? 'configuradas' : 'sin token') + '</span>' +
+      '</div></section>');
+
+    var orden = d.estados || [];
+    partes.push('<section><h2>Estados</h2><div class="cifras">' + orden.map(function (e) {
+      return '<div class="cifra"><b>' + (r[e] || 0) + '</b><span>' + esc(d.etiquetas[e]) + '</span></div>';
+    }).join('') + '</div></section>');
+
+    partes.push('<section><div class="dos"><div><h2>Previsualización del aviso al domiciliario (WhatsApp)</h2><div id="previa">' + previsualizacion() + '</div></div>' +
+      '<div><h2>Cómo funciona</h2>' +
+      '<div class="banner info">1. Shopify manda la orden (orders/create) → se registra la entrega con dirección, coordenadas (Shopify geocodifica), teléfono, notas y cobro.<br>' +
+      '2. Si está pagada o es contra entrega → <b>Asignada</b> → aviso por WhatsApp → <b>Notificado</b>. Si el pago queda pendiente, orders/paid la confirma después.<br>' +
+      '3. El domiciliario responde «Pedido recibido», «recogido», «en camino», «entregado» y el estado avanza solo. También puedes cambiarlo aquí.</div>' +
+      '<p class="sub" style="margin-top:8px">Retiro en tienda no genera entrega. Nunca se inventan coordenadas: sin ellas va la plantilla de texto con la dirección.</p></div></div></section>');
+
+    partes.push('<section><h2>Entregas</h2>' + (ls.length ? ls.map(function (e) {
+      var sel = seleccion && seleccion.id === e.id;
+      return '<div class="ent' + (sel ? ' sel' : '') + '" data-id="' + e.id + '"><div class="linea">' +
+        '<span><b>' + esc(e.pedido_nombre) + '</b> · ' + esc(e.cliente || '') + (e.cobrar > 0 ? ' · <b>cobrar $' + Math.round(e.cobrar).toLocaleString('es-CO') + '</b>' : '') + '</span>' + chip(e.estado) + '</div>' +
+        '<div class="sub">' + esc(e.direccion || 'sin dirección') + (e.lat != null ? ' · 📍 mapa' : ' · sin coordenadas') + ' · ' + esc(hace(e.creado)) + (e.error ? ' · <span class="chip mal">error: ' + esc(e.error) + '</span>' : '') + '</div>' +
+        '<div class="acciones">' +
+          '<button class="btn sec" data-ver="' + e.id + '">Ver en previsualización</button>' +
+          '<select data-estado="' + e.id + '">' + orden.map(function (s) { return '<option value="' + s + '"' + (s === e.estado ? ' selected' : '') + '>' + esc(d.etiquetas[s]) + '</option>'; }).join('') + '</select>' +
+          '<button class="btn" data-cambiar="' + e.id + '">Cambiar estado</button>' +
+          '<button class="btn sec" data-reenviar="' + e.id + '">Reenviar aviso</button>' +
+          '<input type="text" placeholder="Probar a… (celular)" data-tel="' + e.id + '"><button class="btn sec" data-prueba="' + e.id + '">Enviar prueba</button>' +
+          '<span class="msg" data-msg="' + e.id + '"></span>' +
+        '</div></div>';
+    }).join('') : '<p class="vacio">Aún no hay entregas. Aparecerán con el próximo pedido a domicilio.</p>') + '</section>');
+
+    partes.push('<footer>Plantillas Meta UTILITY «entrega_asignada» (header LOCATION dinámico) y «entrega_asignada_texto». La misma plantilla aprobada sirve para todos los pedidos: la ubicación y los datos van como parámetros en cada envío.</footer>');
+    raiz.innerHTML = partes.join('');
+    enganchar();
+  }
+
+  function refrescarPrevia() { var p = document.getElementById('previa'); if (p) { p.innerHTML = previsualizacion(); engancharEjemplo(); } }
+  function engancharEjemplo() {
+    ['lat','lng','nombre','dir'].forEach(function (k) {
+      var el = document.getElementById('ej-' + k); if (!el) return;
+      el.addEventListener('change', function () {
+        if (k === 'lat') ejemplo.lat = Number(el.value); else if (k === 'lng') ejemplo.lng = Number(el.value);
+        else if (k === 'nombre') ejemplo.nombre = el.value; else ejemplo.direccion = el.value;
+        refrescarPrevia();
+      });
+    });
+    var v = document.getElementById('ver-ejemplo');
+    if (v) v.addEventListener('click', function (ev) { ev.preventDefault(); seleccion = null; pintar(datos); });
+  }
+  function post(cuerpo, id, ok) {
+    var m = document.querySelector('[data-msg="' + id + '"]');
+    if (m) { m.style.color = ''; m.textContent = 'Enviando…'; }
+    return fetch(location.pathname + '?k=' + encodeURIComponent(clave), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (m) { m.style.color = res.ok && res.j.ok !== false ? 'var(--ok-tinta)' : 'var(--mal-tinta)'; m.textContent = res.ok && res.j.ok !== false ? (ok || '✓ Hecho') : 'No se pudo (' + esc(res.j.motivo || res.j.error || 'error') + ')'; }
+        return res;
+      })
+      .catch(function () { if (m) { m.style.color = 'var(--mal-tinta)'; m.textContent = 'Error de red.'; } });
+  }
+  function enganchar() {
+    engancharEjemplo();
+    raiz.querySelectorAll('[data-ver]').forEach(function (b) {
+      b.addEventListener('click', function () { seleccion = (datos.lista || []).find(function (x) { return String(x.id) === b.dataset.ver; }) || null; pintar(datos); });
+    });
+    raiz.querySelectorAll('[data-cambiar]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.dataset.cambiar, sel = raiz.querySelector('[data-estado="' + id + '"]');
+        post({ accion: 'estado', id: id, estado: sel.value }, id, '✓ Estado cambiado').then(function () { setTimeout(cargar, 700); });
+      });
+    });
+    raiz.querySelectorAll('[data-reenviar]').forEach(function (b) {
+      b.addEventListener('click', function () { if (confirm('¿Reenviar el aviso al domiciliario (y copia a gerencia)?')) post({ accion: 'reenviar', id: b.dataset.reenviar }, b.dataset.reenviar, '✓ Aviso reenviado').then(function () { setTimeout(cargar, 700); }); });
+    });
+    raiz.querySelectorAll('[data-prueba]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.dataset.prueba, tel = raiz.querySelector('[data-tel="' + id + '"]').value;
+        if (!tel) { alert('Escribe el celular al que quieres mandar la prueba.'); return; }
+        post({ accion: 'prueba', id: id, telefono: tel }, id, '✓ Prueba enviada a ' + tel);
+      });
+    });
+  }
+
+  function cargar() {
+    fetch(location.pathname + '?datos=1&k=' + encodeURIComponent(clave), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('No pude consultar (error ' + r.status + ').'); return r.json(); })
+      .then(function (d) { if (seleccion) seleccion = (d.lista || []).find(function (x) { return x.id === seleccion.id; }) || null; pintar(d); })
+      .catch(function (e) { aviso(e.message); });
+  }
+
+  window.addEventListener('message', function (ev) {
+    var msg = ev.data;
+    if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch (e) { return; } }
+    if (!msg || msg.event !== 'appContext' || !msg.data) return;
+    document.documentElement.setAttribute('data-theme', msg.data.theme === 'dark' ? 'dark' : 'light');
+  });
+  if (window.parent !== window) window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+  cargar();
+})();
+</script>
+</body>
+</html>

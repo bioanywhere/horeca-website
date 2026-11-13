@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Referidos HORECA</title>
+<style>
+  :root {
+    --fondo:#f7f9fb; --tarjeta:#fff; --tinta:#1f2d3d; --suave:#637389; --linea:#e3e8ef; --enlace:#1f6fd6;
+    --ok-fondo:#e4f6ec; --ok-tinta:#17683e; --esp-fondo:#fff4d6; --esp-tinta:#8a5a00;
+    --mal-fondo:#fde8e8; --mal-tinta:#9b1c1c; --neutro-fondo:#eef1f5; --neutro-tinta:#4a5a70; --acento:#1f6fd6;
+  }
+  :root[data-theme="dark"] {
+    --fondo:#151a21; --tarjeta:#1d242d; --tinta:#e6ebf1; --suave:#93a3b8; --linea:#2c3643; --enlace:#6aa8ff;
+    --ok-fondo:#173a28; --ok-tinta:#7fdca6; --esp-fondo:#3d3113; --esp-tinta:#f3c96b;
+    --mal-fondo:#3f1d1d; --mal-tinta:#f5a3a3; --neutro-fondo:#27303b; --neutro-tinta:#b3c0d0; --acento:#6aa8ff;
+  }
+  * { box-sizing:border-box; } html, body { margin:0; }
+  [hidden] { display:none !important; }
+  body { background:var(--fondo); color:var(--tinta); font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; padding:14px; }
+  main { display:grid; gap:12px; max-width:760px; }
+  section { background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; padding:12px 14px; }
+  h1 { font-size:16px; margin:0; text-wrap:balance; }
+  h2 { font-size:11px; margin:0 0 10px; color:var(--suave); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  .sub { color:var(--suave); margin-top:2px; }
+  .cifras { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+  .cifra { border:1px solid var(--linea); border-radius:6px; padding:9px 11px; }
+  .cifra b { display:block; font-size:19px; font-variant-numeric:tabular-nums; }
+  .cifra span { color:var(--suave); font-size:11px; }
+  .campo { display:grid; gap:5px; margin-bottom:11px; }
+  .campo > label { font-weight:600; font-size:12px; }
+  select, input[type=number], input[type=text] { font:inherit; padding:7px 9px; border:1px solid var(--linea); border-radius:6px; background:var(--fondo); color:var(--tinta); width:100%; }
+  .fila { display:flex; align-items:center; gap:9px; }
+  .fila input[type=checkbox] { width:18px; height:18px; }
+  .btn { font:inherit; font-weight:600; font-size:13px; padding:8px 16px; border:1px solid var(--acento); border-radius:6px; background:var(--acento); color:#fff; cursor:pointer; }
+  .btn:disabled { opacity:.6; cursor:default; }
+  .aviso-guardar { color:var(--ok-tinta); font-size:12px; margin-left:10px; }
+  .chip { font-size:11px; padding:2px 8px; border-radius:999px; background:var(--neutro-fondo); color:var(--neutro-tinta); white-space:nowrap; }
+  .chip.ok { background:var(--ok-fondo); color:var(--ok-tinta); }
+  .chip.esp { background:var(--esp-fondo); color:var(--esp-tinta); }
+  .chip.mal { background:var(--mal-fondo); color:var(--mal-tinta); }
+  .ref { border-top:1px solid var(--linea); padding:9px 0; }
+  .ref:first-of-type { border-top:0; }
+  .linea { display:flex; justify-content:space-between; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  .banner { border-radius:6px; padding:9px 11px; font-size:12px; }
+  .banner.warn { background:var(--esp-fondo); color:var(--esp-tinta); }
+  .vacio { color:var(--suave); }
+  .estado { color:var(--suave); padding:24px 4px; }
+  footer { color:var(--suave); font-size:11px; }
+</style>
+</head>
+<body>
+<main id="raiz"><p class="estado">Cargando…</p></main>
+
+<script>
+(function () {
+  'use strict';
+  var raiz = document.getElementById('raiz');
+  var clave = new URLSearchParams(location.search).get('k') || '';
+  var datos = null;
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function tel(t) { return String(t || '').replace(/\D/g, '').slice(-10); }
+  function haceCuanto(iso) {
+    if (!iso) return '';
+    var d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (d <= 0) return 'hoy'; if (d === 1) return 'ayer'; return 'hace ' + d + ' días';
+  }
+  var ESTADOS = {
+    pendiente: ['Esperando 1er pedido', 'esp'], cumplido: ['Cumplido ✓', 'ok'],
+    invalido: ['Inválido', 'mal'], error: ['Error', 'mal']
+  };
+  function chip(e) { var t = ESTADOS[e] || [e, '']; return '<span class="chip ' + t[1] + '">' + esc(t[0]) + '</span>'; }
+  function aviso(t) { raiz.innerHTML = '<p class="estado">' + esc(t) + '</p>'; }
+
+  function opcion(v, txt, sel) { return '<option value="' + v + '"' + (sel === v ? ' selected' : '') + '>' + txt + '</option>'; }
+
+  function pintar(d) {
+    datos = d;
+    var c = d.config || {}, r = d.resumen || {};
+    var partes = [];
+
+    partes.push('<section><h1>Programa de referidos</h1>' +
+      '<p class="sub">«Trae un colega, ambos ganan». Camila entrega el código y el enlace; la recompensa se genera sola cuando el referido hace su primer pedido.</p></section>');
+
+    partes.push('<section><h2>Resumen (90 días)</h2><div class="cifras">' +
+      '<div class="cifra"><b>' + (r.referidores || 0) + '</b><span>clientes con código</span></div>' +
+      '<div class="cifra"><b>' + (r.pendientes || 0) + '</b><span>esperando 1er pedido</span></div>' +
+      '<div class="cifra"><b>' + (r.cumplidos || 0) + '</b><span>referidos que compraron</span></div>' +
+      '</div>' +
+      (r.por_honrar_manual ? '<div class="banner warn" style="margin-top:10px">⚠️ ' + r.por_honrar_manual + ' recompensa(s) sin código automático (falta el permiso <b>write_discounts</b> en Shopify). Hónralas a mano por ahora.</div>' : '') +
+      '</section>');
+
+    // --- Configuración de la recompensa ---
+    var tipo = c.tipo || 'domicilio';
+    partes.push('<section><h2>Recompensa que se entrega</h2>' +
+      '<div class="campo fila"><input type="checkbox" id="activo"' + (c.activo ? ' checked' : '') + '>' +
+        '<label for="activo">Programa activo (Camila lo ofrece)</label></div>' +
+      '<div class="campo"><label for="tipo">Tipo de recompensa (para ambos)</label><select id="tipo">' +
+        opcion('domicilio', 'Domicilio gratis', tipo) +
+        opcion('porcentaje', '% de descuento', tipo) +
+        opcion('monto', 'Monto fijo en COP', tipo) +
+        opcion('producto', 'Producto de regalo', tipo) +
+      '</select></div>' +
+      '<div class="campo" id="c-valor"><label for="valor" id="l-valor">Valor</label>' +
+        '<input type="number" id="valor" min="1" value="' + esc(c.valor != null ? c.valor : '') + '"></div>' +
+      '<div class="campo" id="c-prod"><label for="pv">ID de variante del producto de regalo</label>' +
+        '<input type="text" id="pv" placeholder="ej. 40123456789012" value="' + esc(c.producto_variante || '') + '">' +
+        '<input type="text" id="pt" placeholder="Nombre del producto (opcional)" value="' + esc(c.producto_titulo || '') + '" style="margin-top:5px"></div>' +
+      '<div class="campo"><label for="vence">Vence a los (días)</label>' +
+        '<input type="number" id="vence" min="1" value="' + esc(c.vence_dias || 30) + '"></div>' +
+      '<div class="fila"><button class="btn" id="guardar">Guardar</button><span class="aviso-guardar" id="msg"></span></div>' +
+      '</section>');
+
+    // --- Lista ---
+    var ls = d.lista || [];
+    partes.push('<section><h2>Últimos referidos</h2>' + (ls.length
+      ? ls.map(function (x) {
+          return '<div class="ref"><div class="linea">' +
+            '<span>' + (x.nombre ? esc(x.nombre) + ' · ' : '') + '<span class="mono">…' + esc(tel(x.referido_tel)) + '</span></span>' +
+            chip(x.estado) + '</div>' +
+            '<div class="sub">código <span class="mono">' + esc(x.codigo) + '</span> · referido por <span class="mono">…' + esc(tel(x.referidor_tel)) + '</span> · ' + esc(haceCuanto(x.creado)) +
+            (x.estado === 'cumplido' && !x.recompensa_referido_cod ? ' · <b>honrar a mano</b>' : '') + '</div></div>';
+        }).join('')
+      : '<p class="vacio">Aún no hay referidos. Aparecerán cuando un cliente comparta su código y otro negocio escriba con él.</p>') + '</section>');
+
+    partes.push('<footer>Camila ofrece el código al cerrar un pedido y si preguntan por descuentos. La recompensa se genera como código de Shopify cuando el referido hace su primer pedido, y se entrega en el chat cuando cada parte vuelve a escribir.</footer>');
+    raiz.innerHTML = partes.join('');
+    ajustarCampos();
+    document.getElementById('tipo').addEventListener('change', ajustarCampos);
+    document.getElementById('guardar').addEventListener('click', guardar);
+  }
+
+  function ajustarCampos() {
+    var tipo = document.getElementById('tipo').value;
+    var cv = document.getElementById('c-valor'), cp = document.getElementById('c-prod'), lv = document.getElementById('l-valor');
+    cv.hidden = !(tipo === 'porcentaje' || tipo === 'monto');
+    cp.hidden = tipo !== 'producto';
+    if (tipo === 'porcentaje') lv.textContent = 'Porcentaje (%)';
+    else if (tipo === 'monto') lv.textContent = 'Monto en COP';
+  }
+
+  function guardar() {
+    var b = document.getElementById('guardar'), msg = document.getElementById('msg');
+    var cuerpo = {
+      activo: document.getElementById('activo').checked,
+      tipo: document.getElementById('tipo').value,
+      valor: document.getElementById('valor').value,
+      producto_variante: document.getElementById('pv').value,
+      producto_titulo: document.getElementById('pt').value,
+      vence_dias: document.getElementById('vence').value
+    };
+    b.disabled = true; msg.style.color = ''; msg.textContent = 'Guardando…';
+    fetch(location.pathname + '?k=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo)
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        b.disabled = false;
+        if (res.ok && res.j.ok) { msg.style.color = 'var(--ok-tinta)'; msg.textContent = '✓ Guardado'; }
+        else { msg.style.color = 'var(--mal-tinta)'; msg.textContent = 'No se pudo (' + ((res.j && res.j.error) || 'error') + ')'; }
+      })
+      .catch(function () { b.disabled = false; msg.style.color = 'var(--mal-tinta)'; msg.textContent = 'Error de red.'; });
+  }
+
+  function cargar() {
+    fetch(location.pathname + '?datos=1&k=' + encodeURIComponent(clave), { cache:'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('No pude consultar (error ' + r.status + ').'); return r.json(); })
+      .then(pintar)
+      .catch(function (e) { aviso(e.message); });
+  }
+
+  window.addEventListener('message', function (ev) {
+    var msg = ev.data;
+    if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch (e) { return; } }
+    if (!msg || msg.event !== 'appContext' || !msg.data) return;
+    document.documentElement.setAttribute('data-theme', msg.data.theme === 'dark' ? 'dark' : 'light');
+  });
+
+  if (window.parent !== window) window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+  cargar();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Cotizaciones HORECA</title>
+<style>
+  :root {
+    --fondo:#f7f9fb; --tarjeta:#fff; --tinta:#1f2d3d; --suave:#637389; --linea:#e3e8ef; --enlace:#1f6fd6;
+    --ok-fondo:#e4f6ec; --ok-tinta:#17683e; --esp-fondo:#fff4d6; --esp-tinta:#8a5a00;
+    --mal-fondo:#fde8e8; --mal-tinta:#9b1c1c; --neutro-fondo:#eef1f5; --neutro-tinta:#4a5a70; --acento:#1f6fd6;
+    --wa-fondo:#e5ddd5; --wa-burbuja:#fff; --wa-tinta:#111b21; --wa-suave:#667781; --wa-boton:#00a5f4; --wa-var:#fff2a8;
+  }
+  :root[data-theme="dark"] {
+    --fondo:#151a21; --tarjeta:#1d242d; --tinta:#e6ebf1; --suave:#93a3b8; --linea:#2c3643; --enlace:#6aa8ff;
+    --ok-fondo:#173a28; --ok-tinta:#7fdca6; --esp-fondo:#3d3113; --esp-tinta:#f3c96b;
+    --mal-fondo:#3f1d1d; --mal-tinta:#f5a3a3; --neutro-fondo:#27303b; --neutro-tinta:#b3c0d0; --acento:#6aa8ff;
+    --wa-fondo:#0b141a; --wa-burbuja:#202c33; --wa-tinta:#e9edef; --wa-suave:#8696a0; --wa-boton:#53bdeb; --wa-var:#5a4d12;
+  }
+  * { box-sizing:border-box; } html, body { margin:0; }
+  [hidden] { display:none !important; }
+  body { background:var(--fondo); color:var(--tinta); font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; padding:14px; }
+  main { display:grid; gap:12px; max-width:980px; }
+  section { background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; padding:12px 14px; }
+  h1 { font-size:16px; margin:0; text-wrap:balance; }
+  h2 { font-size:11px; margin:0 0 10px; color:var(--suave); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  .sub { color:var(--suave); margin-top:2px; }
+  .cifras { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; }
+  .cifra { border:1px solid var(--linea); border-radius:6px; padding:9px 11px; }
+  .cifra b { display:block; font-size:19px; font-variant-numeric:tabular-nums; }
+  .cifra span { color:var(--suave); font-size:11px; display:block; }
+  .btn { font:inherit; font-weight:600; font-size:12px; padding:6px 12px; border:1px solid var(--acento); border-radius:6px; background:var(--acento); color:#fff; cursor:pointer; }
+  .btn.sec { background:transparent; color:var(--acento); }
+  .chip { font-size:11px; padding:2px 8px; border-radius:999px; background:var(--neutro-fondo); color:var(--neutro-tinta); white-space:nowrap; }
+  .chip.ok { background:var(--ok-fondo); color:var(--ok-tinta); }
+  .chip.esp { background:var(--esp-fondo); color:var(--esp-tinta); }
+  .chip.mal { background:var(--mal-fondo); color:var(--mal-tinta); }
+  .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  .banner { border-radius:6px; padding:9px 11px; font-size:12px; }
+  .banner.info { background:var(--neutro-fondo); color:var(--neutro-tinta); }
+  .vacio, .estado { color:var(--suave); }
+  .estado { padding:24px 4px; }
+  footer { color:var(--suave); font-size:11px; }
+  select, input[type=text] { font:inherit; padding:6px 8px; border:1px solid var(--linea); border-radius:6px; background:var(--fondo); color:var(--tinta); }
+  .dos { display:grid; grid-template-columns:minmax(300px,380px) 1fr; gap:14px; align-items:start; }
+  @media (max-width:760px) { .dos { grid-template-columns:1fr; } }
+  .wa { background:var(--wa-fondo); border-radius:12px; padding:14px 12px; }
+  .wa__burbuja { background:var(--wa-burbuja); color:var(--wa-tinta); border-radius:10px; max-width:340px; overflow:hidden; box-shadow:0 1px 1px rgba(0,0,0,.12); font-size:14px; line-height:1.4; }
+  .wa__cuerpo { padding:8px 10px 4px; white-space:pre-wrap; word-break:break-word; }
+  .wa__pie { padding:0 10px 8px; color:var(--wa-suave); font-size:12px; }
+  .wa__hora { text-align:right; color:var(--wa-suave); font-size:11px; padding:0 10px 6px; }
+  .wa__btn { border-top:1px solid rgba(0,0,0,.08); text-align:center; color:var(--wa-boton); padding:10px; font-weight:500; }
+  .var { background:var(--wa-var); border-radius:3px; padding:0 2px; }
+  .leyenda { font-size:12px; color:var(--suave); margin-top:8px; }
+  .cot { border-top:1px solid var(--linea); padding:10px 0; }
+  .cot:first-of-type { border-top:0; }
+  .linea { display:flex; justify-content:space-between; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .acciones { display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; align-items:center; }
+  .acciones input[type=text] { width:150px; }
+  .msg { font-size:12px; margin-left:6px; }
+  details summary { cursor:pointer; color:var(--suave); font-size:12px; }
+  details ul { margin:4px 0 0 16px; padding:0; font-size:12px; }
+</style>
+</head>
+<body>
+<main id="raiz"><p class="estado">Cargando…</p></main>
+<script>
+(function () {
+  'use strict';
+  var raiz = document.getElementById('raiz');
+  var clave = new URLSearchParams(location.search).get('k') || '';
+  var datos = null;
+
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function pesos(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-CO'); }
+  function hace(iso) {
+    if (!iso) return '';
+    var m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (m < 1) return 'ahora'; if (m < 60) return 'hace ' + m + ' min';
+    var h = Math.floor(m / 60); if (h < 24) return 'hace ' + h + ' h';
+    return 'hace ' + Math.floor(h / 24) + ' d';
+  }
+  function cuando(iso) { return iso ? new Date(iso).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; }
+  var CLASE = { abierta: 'esp', comprada: 'ok', cerrada: '' };
+  function chip(e) { return '<span class="chip ' + (CLASE[e] || '') + '">' + esc((datos && datos.etiquetas[e]) || e) + '</span>'; }
+  function aviso(t) { raiz.innerHTML = '<p class="estado">' + esc(t) + '</p>'; }
+  function negrita(s) { return s.replace(/\*([^*\n]+)\*/g, '<b>$1</b>'); }
+
+  function previsualizacion() {
+    var vals = ['Alejandro', 'COT-20260914-1625-7379', '$43.500'];
+    var t = esc(datos.plantilla.cuerpo).replace(/\{\{(\d)\}\}/g, function (_, n) { return '<span class="var">' + esc(vals[n - 1]) + '</span>'; });
+    return '<div class="wa"><div class="wa__burbuja"><div class="wa__cuerpo">' + negrita(t) + '</div>' +
+      '<div class="wa__pie">' + esc(datos.plantilla.pie) + '</div>' +
+      '<div class="wa__hora">' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
+      '<div class="wa__btn">🔗 ' + esc(datos.plantilla.botones[0]) + '</div><div class="wa__btn">↩ ' + esc(datos.plantilla.botones[1]) + '</div></div></div>' +
+      '<p class="leyenda"><span class="var">Resaltado</span> = dinámico: nombre, número y total de la cotización; el botón «Comprar» abre el carrito con exactamente lo cotizado. Plantilla <span class="mono">' + esc(datos.plantilla.nombre) + '</span> (' + esc(datos.plantilla.categoria) + ').</p>';
+  }
+
+  function seguimientoDe(c) {
+    if (c.estado === 'comprada') return '<span class="chip ok">Compró ' + esc(c.pedido_nombre || '') + '</span>';
+    if (c.seguimiento_enviado) return '<span class="chip ok">Seguimiento enviado ' + esc(hace(c.seguimiento_enviado)) + '</span>';
+    if (c.seguimiento_error) return '<span class="chip mal">Seguimiento falló: ' + esc(c.seguimiento_error) + '</span>';
+    if (c.estado === 'cerrada') return '<span class="chip">Sin seguimiento</span>';
+    if (!c.telefono) return '<span class="chip esp">Sin teléfono: no se puede hacer seguimiento</span>';
+    return '<span class="chip esp">Seguimiento programado ' + esc(cuando(c.seguimiento_en)) + '</span>';
+  }
+
+  function pintar(d) {
+    datos = d;
+    var c = d.config || {}, r = d.resumen || {}, ls = d.lista || [];
+    var partes = [];
+    partes.push('<section><h1>Cotizaciones</h1>' +
+      '<p class="sub">Cada PDF que Camila entrega (WhatsApp o web) queda aquí. Si a las ' + esc(c.horasEspera) + ' h no hay compra, Camila pregunta por WhatsApp cómo va la aprobación (una sola vez, en horario 8–19). Un pedido del mismo cliente la marca como comprada.</p>' +
+      '<div class="acciones" style="margin-top:8px"><span class="chip ' + (c.activo ? 'ok' : 'mal') + '">Seguimiento ' + (c.activo ? 'activo' : 'apagado') + '</span>' +
+      '<span class="chip ' + (c.plantillas ? 'ok' : 'mal') + '">Plantillas ' + (c.plantillas ? 'configuradas' : 'sin token') + '</span></div></section>');
+
+    partes.push('<section><h2>Últimos 30 días</h2><div class="cifras">' + (d.estados || []).map(function (e) {
+      var x = r[e] || { n: 0, total: 0 };
+      return '<div class="cifra"><b>' + x.n + '</b><span>' + esc(d.etiquetas[e]) + '</span><span>' + pesos(x.total) + '</span></div>';
+    }).join('') + '</div></section>');
+
+    partes.push('<section><div class="dos"><div><h2>Previsualización del seguimiento (WhatsApp)</h2>' + previsualizacion() + '</div>' +
+      '<div><h2>Cómo funciona</h2><div class="banner info">1. El cliente pide cotización → Camila entrega el PDF y la registra aquí con el carrito.<br>' +
+      '2. Pasadas ' + esc(c.horasEspera) + ' h sin pedido → plantilla de seguimiento por WhatsApp (el cliente puede comprar con el botón o responder «Ajustar cotización», que atiende Camila con el contexto).<br>' +
+      '3. Si entra un pedido del mismo cliente → <b>Comprada</b>. Puedes cerrar una cotización para que no se le haga seguimiento.</div>' +
+      '<p class="sub" style="margin-top:8px">Las cotizaciones de la web solo reciben seguimiento si la ficha del cliente en Shopify tiene teléfono.</p></div></div></section>');
+
+    partes.push('<section><h2>Cotizaciones</h2>' + (ls.length ? ls.map(function (q) {
+      var lineas = Array.isArray(q.lineas) ? q.lineas : [];
+      return '<div class="cot"><div class="linea"><span><b>' + esc(q.numero) + '</b> · ' + esc(q.nombre || q.telefono || q.cliente_id || 'cliente') + ' · <b>' + pesos(q.total) + '</b> · <span class="chip">' + esc(q.canal) + '</span></span>' + chip(q.estado) + '</div>' +
+        '<div class="sub">' + esc(hace(q.creada)) + (q.telefono ? ' · ' + esc(q.telefono) : '') + ' · ' + seguimientoDe(q) + '</div>' +
+        (lineas.length ? '<details><summary>' + lineas.length + ' línea(s)</summary><ul>' + lineas.map(function (l) { return '<li>' + esc(l.cantidad) + ' × ' + esc(l.titulo) + ' — ' + pesos(l.subtotal) + '</li>'; }).join('') + '</ul></details>' : '') +
+        '<div class="acciones">' +
+          '<select data-estado="' + esc(q.numero) + '">' + (d.estados || []).map(function (s) { return '<option value="' + s + '"' + (s === q.estado ? ' selected' : '') + '>' + esc(d.etiquetas[s]) + '</option>'; }).join('') + '</select>' +
+          '<button class="btn" data-cambiar="' + esc(q.numero) + '">Cambiar estado</button>' +
+          (q.telefono ? '<button class="btn sec" data-seg="' + esc(q.numero) + '">Enviar seguimiento ahora</button>' : '') +
+          (q.enlace_carrito ? '<a class="btn sec" href="' + esc(q.enlace_carrito) + '" target="_blank" rel="noopener">Ver carrito</a>' : '') +
+          '<input type="text" placeholder="Probar a… (celular)" data-tel="' + esc(q.numero) + '"><button class="btn sec" data-prueba="' + esc(q.numero) + '">Enviar prueba</button>' +
+          '<span class="msg" data-msg="' + esc(q.numero) + '"></span></div></div>';
+    }).join('') : '<p class="vacio">Aún no hay cotizaciones registradas. Aparecerán con el próximo PDF que entregue Camila.</p>') + '</section>');
+
+    partes.push('<footer>Plantilla Meta UTILITY «cotizacion_seguimiento». Fuera de la ventana de 24 h de WhatsApp solo se puede escribir con plantilla; por eso el seguimiento va por Cloud API y la respuesta del cliente entra a Chatwoot.</footer>');
+    raiz.innerHTML = partes.join('');
+    enganchar();
+  }
+
+  function post(cuerpo, id, ok) {
+    var m = document.querySelector('[data-msg="' + id + '"]');
+    if (m) { m.style.color = ''; m.textContent = 'Enviando…'; }
+    return fetch(location.pathname + '?k=' + encodeURIComponent(clave), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (m) { m.style.color = res.ok && res.j.ok !== false ? 'var(--ok-tinta)' : 'var(--mal-tinta)'; m.textContent = res.ok && res.j.ok !== false ? (ok || '✓ Hecho') : 'No se pudo (' + esc(res.j.motivo || res.j.error || 'error') + ')'; }
+        return res;
+      })
+      .catch(function () { if (m) { m.style.color = 'var(--mal-tinta)'; m.textContent = 'Error de red.'; } });
+  }
+  function enganchar() {
+    raiz.querySelectorAll('[data-cambiar]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = b.dataset.cambiar, sel = raiz.querySelector('[data-estado="' + n + '"]');
+        post({ accion: 'estado', numero: n, estado: sel.value }, n, '✓ Estado cambiado').then(function () { setTimeout(cargar, 700); });
+      });
+    });
+    raiz.querySelectorAll('[data-seg]').forEach(function (b) {
+      b.addEventListener('click', function () { if (confirm('¿Enviar el seguimiento por WhatsApp al cliente ahora?')) post({ accion: 'seguimiento', numero: b.dataset.seg }, b.dataset.seg, '✓ Seguimiento enviado').then(function () { setTimeout(cargar, 700); }); });
+    });
+    raiz.querySelectorAll('[data-prueba]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = b.dataset.prueba, tel = raiz.querySelector('[data-tel="' + n + '"]').value;
+        if (!tel) { alert('Escribe el celular al que quieres mandar la prueba.'); return; }
+        post({ accion: 'prueba', numero: n, telefono: tel }, n, '✓ Prueba enviada a ' + tel);
+      });
+    });
+  }
+  function cargar() {
+    fetch(location.pathname + '?datos=1&k=' + encodeURIComponent(clave), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('No pude consultar (error ' + r.status + ').'); return r.json(); })
+      .then(pintar).catch(function (e) { aviso(e.message); });
+  }
+  window.addEventListener('message', function (ev) {
+    var msg = ev.data;
+    if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch (e) { return; } }
+    if (!msg || msg.event !== 'appContext' || !msg.data) return;
+    document.documentElement.setAttribute('data-theme', msg.data.theme === 'dark' ? 'dark' : 'light');
+  });
+  if (window.parent !== window) window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+  cargar();
+})();
+</script>
+</body>
+</html>

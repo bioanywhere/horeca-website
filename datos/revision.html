@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotejo de fotos Kyte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#eef1f6; --surface:#ffffff; --surface-2:#f6f8fb; --border:#dde3ec; --line:#e6ebf2;
+    --ink:#1a2230; --muted:#5c6a7e; --faint:#8794a6;
+    --accent:#146fe0; --accent-soft:#e7f0fd;
+    --ok:#0e9f6e; --ok-soft:#e4f6ec;
+    --warn:#b4530a; --warn-soft:#fbeede;
+    --bad:#b42318; --bad-soft:#fbe7e5;
+    --slate:#4a5a70; --slate-soft:#e9edf3;
+    --shadow:0 1px 2px rgba(20,34,54,.05), 0 6px 20px -10px rgba(20,34,54,.15);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12161d; --surface:#1a2029; --surface-2:#20272f; --border:#2c3440; --line:#252d37;
+      --ink:#e7ecf3; --muted:#9aa7b8; --faint:#6b7889;
+      --accent:#5aa0ff; --accent-soft:#16283f;
+      --ok:#4bd4a0; --ok-soft:#12312a;
+      --warn:#f0a35a; --warn-soft:#33240f;
+      --bad:#f38a7f; --bad-soft:#3a1c19;
+      --slate:#a9b6c8; --slate-soft:#232b35;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px -10px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12161d; --surface:#1a2029; --surface-2:#20272f; --border:#2c3440; --line:#252d37;
+    --ink:#e7ecf3; --muted:#9aa7b8; --faint:#6b7889;
+    --accent:#5aa0ff; --accent-soft:#16283f; --ok:#4bd4a0; --ok-soft:#12312a;
+    --warn:#f0a35a; --warn-soft:#33240f; --bad:#f38a7f; --bad-soft:#3a1c19;
+    --slate:#a9b6c8; --slate-soft:#232b35; --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px -10px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px; margin:0 auto; padding:24px 18px 90px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600}
+  h1{font-size:25px; font-weight:700; margin:4px 0 6px; letter-spacing:-.01em}
+  .lead{color:var(--muted); margin:0 0 16px; max-width:70ch}
+  .lead b{color:var(--ink); font-weight:600}
+  .tallies{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px}
+  .resumen{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:4px 0 16px;
+    padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)}
+  .resumen h2{grid-column:1/-1; margin:0 0 2px; font-size:14px; font-weight:700; color:var(--ink)}
+  .rcard{padding:10px 12px; border-radius:9px; border:1px solid var(--border)}
+  .rcard .n{font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.1}
+  .rcard .l{font-size:12px; color:var(--muted); margin-top:2px}
+  .rcard.ok{background:var(--ok-soft)} .rcard.ok .n{color:var(--ok)}
+  .rcard.warn{background:var(--warn-soft)} .rcard.warn .n{color:var(--warn)}
+  .resumen .nota{grid-column:1/-1; font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:2px}
+  .tally{display:inline-flex; align-items:baseline; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 11px; box-shadow:var(--shadow)}
+  .tally b{font-family:"IBM Plex Mono",monospace; font-weight:600; font-variant-numeric:tabular-nums}
+  .tally span{font-size:12.5px; color:var(--muted)}
+
+  .toolbar{position:sticky; top:0; z-index:5; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    background:var(--bg); padding:10px 0; margin-bottom:6px; border-bottom:1px solid var(--line)}
+  .search{flex:1; min-width:180px; font:inherit; font-size:14px; color:var(--ink); background:var(--surface);
+    border:1.5px solid var(--border); border-radius:8px; padding:8px 12px}
+  .search:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .filters{display:flex; gap:6px; flex-wrap:wrap}
+  .fbtn{font:inherit; font-size:13px; font-weight:600; cursor:pointer; background:var(--surface); color:var(--muted);
+    border:1px solid var(--border); border-radius:999px; padding:7px 13px}
+  .fbtn[aria-pressed="true"]{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .fbtn b{font-family:"IBM Plex Mono",monospace; font-weight:600; opacity:.85; margin-left:4px}
+
+  .tablewrap{overflow-x:auto; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; min-width:1180px}
+  thead th{background:var(--surface-2); text-align:left; font-size:11.5px;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--faint); font-weight:600; padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap}
+  tbody td{padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr{border-left:3px solid transparent}
+  tr.g-aplicadas{border-left-color:var(--ok)}
+  tr.g-descartadas{border-left-color:var(--slate)}
+  tr.g-duda,tr.g-pendientes{border-left-color:var(--warn)}
+  .estado{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:999px; white-space:nowrap}
+  .e-ok{background:var(--ok-soft); color:var(--ok)}
+  .e-warn{background:var(--warn-soft); color:var(--warn)}
+  .e-slate{background:var(--slate-soft); color:var(--slate)}
+  .prod{font-size:13.5px; overflow-wrap:anywhere; max-width:240px}
+  .prod.empty{color:var(--faint); font-style:italic}
+  .cto{font-size:13px; color:var(--muted); max-width:280px; overflow-wrap:anywhere}
+  td.inp{min-width:200px}
+  .inp-wrap{position:relative}
+  input.instr{width:100%; font:inherit; font-size:13.5px; color:var(--ink); background:var(--surface);
+    border:1.5px solid var(--border); border-radius:7px; padding:7px 26px 7px 10px}
+  input.instr:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  input.instr::placeholder{color:var(--faint)}
+  .ok-dot{position:absolute; right:8px; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:50%;
+    background:var(--ok); opacity:0; transition:opacity .2s}
+  .ok-dot.show{opacity:1}
+  td.fotoc{width:64px; text-align:center}
+  a.foto{display:inline-block; line-height:0}
+  a.foto img{width:52px; height:52px; object-fit:contain; background:var(--surface-2); border:1px solid var(--border); border-radius:6px}
+  .nofoto{color:var(--faint)}
+  td.urlc{min-width:190px}
+  .inp-wrap.url input{padding-right:44px; font-family:"IBM Plex Mono",monospace; font-size:12px}
+  .inp-wrap.url a.go{position:absolute; right:22px; top:50%; transform:translateY(-50%); text-decoration:none;
+    color:var(--accent); font-size:15px; font-weight:700; line-height:1}
+  .inp-wrap.url a.go[hidden]{display:none}
+  #empty{padding:26px; text-align:center; color:var(--muted)}
+
+  .bar{position:sticky; bottom:0; z-index:5; margin-top:18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:11px 16px; box-shadow:var(--shadow)}
+  .bar .status{font-size:13px; color:var(--muted)}
+  .bar .status b{color:var(--ink); font-family:"IBM Plex Mono",monospace}
+  .offline{font-size:12.5px; color:var(--warn); background:var(--warn-soft); border-radius:6px; padding:4px 9px; display:none}
+  .offline.show{display:inline-block}
+  button.copy{margin-left:auto; font:inherit; font-weight:600; font-size:14px; cursor:pointer; background:var(--accent); color:#fff; border:none; border-radius:8px; padding:9px 16px}
+  button.copy:hover{filter:brightness(1.06)}
+  button.copy:focus-visible,.fbtn:focus-visible,.search:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Horeca Center · Cotejo Kyte ↔ HorecaCenter.co</div>
+    <h1>Cotejo de fotos Kyte</h1>
+    <p class="lead">Katherine: esta es la tabla completa del cotejo, como el Excel. Cada producto tiene su <b>estado</b> (qué se hizo), mi observación en <b>Feedback CTO</b>, y un campo <b>Tu instrucción</b> donde puedes indicar cambios en cualquier fila — se <b>guarda solo</b>. Cuando termines, avísame y aplico. Empiezas viendo las <b>pendientes</b>; usa los filtros para ver el resto.</p>
+    <div class="tallies" id="tallies"></div>
+  </header>
+
+  <div class="resumen">
+    <h2>Estado del cotejo — limpieza del sello «HORECA»</h2>
+    <div class="rcard ok"><div class="n">125</div><div class="l">✅ Sello quitado + cuadradas y aplicadas</div></div>
+    <div class="rcard ok"><div class="n">278</div><div class="l">✅ Revisadas: ya estaban sin sello</div></div>
+    <div class="rcard warn"><div class="n">22</div><div class="l">⏳ Falta crear el producto en Shopify</div></div>
+    <div class="rcard warn"><div class="n">23</div><div class="l">⏳ Falta confirmar (emparejamiento/talla)</div></div>
+    <p class="nota"><b>Qué falta y depende de ti / Katherine:</b> las <b>22 «Falta crear producto»</b> son fotos sin producto en la tienda — dame precio y descripción y los creo. Las <b>23 «Falta confirmar»</b> están marcadas <b>En duda</b>: dejé la pregunta en «Feedback CTO» de cada una (talla o producto correcto); en cuanto Katherine responda en «Tu instrucción», las limpio y aplico. Filtra por <b>En duda</b> y <b>Sin pareja</b> para verlas.</p>
+  </div>
+
+  <div class="toolbar">
+    <input class="search" id="search" type="search" placeholder="Buscar producto…" autocomplete="off">
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>Estado</th><th>Foto Kyte</th><th>Producto en Kyte</th><th>URL Kyte</th><th>Foto Horeca</th><th>Producto en Shopify</th><th>URL Horeca</th><th>Feedback CTO</th><th>Tu instrucción / comentario</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div id="empty" hidden>No hay filas en este filtro.</div>
+  </div>
+
+  <div class="bar">
+    <div class="status" id="status">Cargando…</div>
+    <span class="offline" id="offline">Sin conexión — usa «Copiar respuestas»</span>
+    <button class="copy" id="copyBtn">Copiar respuestas</button>
+  </div>
+</div>
+
+<script>
+const CLAVE=new URLSearchParams(location.search).get("k")||"";
+const API="./revision?k="+encodeURIComponent(CLAVE);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const ESTADOS={
+  aplicada:{g:"aplicadas",cls:"e-ok",txt:"Aplicada"},
+  "aplicada-antes":{g:"aplicadas",cls:"e-ok",txt:"Ya tenía foto"},
+  "aplicada-auto":{g:"aplicadas",cls:"e-ok",txt:"Aplicada (auto)"},
+  "aplicada-sp":{g:"aplicadas",cls:"e-ok",txt:"Aplicada"},
+  descartada:{g:"descartadas",cls:"e-slate",txt:"Descartada"},
+  duda:{g:"duda",cls:"e-warn",txt:"En duda"},
+  pendiente:{g:"pendientes",cls:"e-warn",txt:"Pendiente"},
+  "sin-pareja":{g:"pendientes",cls:"e-slate",txt:"Sin pareja"},
+  "sin-decidir":{g:"pendientes",cls:"e-warn",txt:"Sin decidir"}
+};
+const GRUPOS=[["pendientes","Pendientes"],["aplicadas","Aplicadas"],["descartadas","Descartadas"],["duda","En duda"],["todas","Todas"]];
+
+let DATA=[], answers={}, filtro="pendientes", q="";
+const tbody=document.getElementById("tbody"), status=document.getElementById("status");
+const timers={};
+
+function grupoDe(e){return (ESTADOS[e.estado]||{}).g||"todas";}
+function visibles(){
+  return DATA.filter(d=>{
+    const g=grupoDe(d);
+    if(filtro!=="todas" && g!==filtro) return false;
+    if(q){ const s=(d.kyte+" "+d.shop+" "+d.cto).toLowerCase(); if(!s.includes(q)) return false; }
+    return true;
+  });
+}
+function render(){
+  const rows=visibles();
+  document.getElementById("empty").hidden=rows.length>0;
+  tbody.innerHTML=rows.map(d=>{
+    const es=ESTADOS[d.estado]||{cls:"e-slate",txt:d.estado,g:"todas"};
+    const shopEmpty=(!d.shop||d.shop==="—");
+    const a=answers[d.id]||{};
+    const vKathe=esc(a.kathe||"");
+    const vUrlk=esc(a.urlk?a.urlk:(d.urlk||""));
+    const vUrlh=esc(a.urlh?a.urlh:(d.urlh||""));
+    const urlCell=(campo,val)=>'<div class="inp-wrap url"><input class="instr url" data-id="'+d.id+'" data-campo="'+campo+'" value="'+val+'" placeholder="(pega la URL)"><a class="go" target="_blank" rel="noopener" '+(val?('href="'+val+'"'):'hidden')+' title="Abrir">↗</a><span class="ok-dot" id="d'+campo+'_'+d.id+'"></span></div>';
+    const foto=u=>u?'<a class="foto" href="'+esc(u)+'" target="_blank" rel="noopener"><img loading="lazy" src="'+esc(u)+'" alt="" onerror="this.closest(\'a\').outerHTML=\'<span class=nofoto>sin foto</span>\'"></a>':'<span class="nofoto">—</span>';
+    return '<tr class="g-'+es.g+'">'+
+      '<td><span class="estado '+es.cls+'">'+esc(es.txt)+'</span></td>'+
+      '<td class="fotoc">'+foto(d.fk)+'</td>'+
+      '<td class="prod">'+esc(d.kyte)+'</td>'+
+      '<td class="urlc">'+urlCell("urlk",vUrlk)+'</td>'+
+      '<td class="fotoc">'+foto(d.fh)+'</td>'+
+      '<td class="prod'+(shopEmpty?" empty":"")+'">'+esc(d.shop||"—")+'</td>'+
+      '<td class="urlc">'+urlCell("urlh",vUrlh)+'</td>'+
+      '<td class="cto">'+esc(d.cto)+'</td>'+
+      '<td class="inp"><div class="inp-wrap"><input class="instr" data-id="'+d.id+'" data-campo="kathe" value="'+vKathe+'" placeholder="Escribe aquí…"><span class="ok-dot" id="dkathe_'+d.id+'"></span></div></td>'+
+    '</tr>';
+  }).join("");
+  wire();
+}
+function wire(){
+  tbody.querySelectorAll("input.instr").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const id=inp.dataset.id, campo=inp.dataset.campo, val=inp.value;
+      if(!answers[id]) answers[id]={};
+      answers[id][campo]=val;
+      if(campo!=="kathe"){ const go=inp.parentElement.querySelector("a.go"); if(go){ if(val){go.href=val; go.hidden=false;} else go.hidden=true; } }
+      if(campo==="kathe") tallies();
+      const key=id+campo;
+      clearTimeout(timers[key]);
+      timers[key]=setTimeout(async ()=>{
+        try{
+          const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,campo,valor:val})});
+          if(r.ok){const dot=document.getElementById("d"+campo+"_"+id); if(dot){dot.classList.add("show"); setTimeout(()=>dot.classList.remove("show"),1200);}}
+          else document.getElementById("offline").classList.add("show");
+        }catch(e){ document.getElementById("offline").classList.add("show"); }
+      },500);
+    });
+  });
+}
+
+function tallies(){
+  const c={}; DATA.forEach(d=>{const g=grupoDe(d); c[g]=(c[g]||0)+1;});
+  document.getElementById("tallies").innerHTML=
+    '<div class="tally"><b>'+DATA.length+'</b><span>productos</span></div>'+
+    '<div class="tally"><b>'+(c.aplicadas||0)+'</b><span>fotos aplicadas</span></div>'+
+    '<div class="tally"><b>'+((c.pendientes||0))+'</b><span>pendientes de ti</span></div>'+
+    '<div class="tally"><b>'+(c.descartadas||0)+'</b><span>descartadas</span></div>';
+  const answered=Object.values(answers).filter(v=>v&&v.kathe&&v.kathe.trim()).length;
+  status.innerHTML=answered?('<b>'+answered+'</b> instrucciones escritas'):'Escribe tus instrucciones donde haga falta.';
+}
+function filterBar(){
+  const c={}; DATA.forEach(d=>{const g=grupoDe(d); c[g]=(c[g]||0)+1;});
+  document.getElementById("filters").innerHTML=GRUPOS.map(([g,label])=>{
+    const n=g==="todas"?DATA.length:(c[g]||0);
+    return '<button class="fbtn" data-g="'+g+'" aria-pressed="'+(g===filtro)+'">'+label+'<b>'+n+'</b></button>';
+  }).join("");
+  document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{
+    filtro=b.dataset.g; document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed", x.dataset.g===filtro)); render();
+  }));
+}
+document.getElementById("search").addEventListener("input",e=>{q=e.target.value.trim().toLowerCase(); render();});
+
+// El encabezado de la tabla se pega justo debajo de la barra de filtros, sea
+// cual sea su alto (en móvil los filtros ocupan varias líneas).
+const toolbar=document.querySelector(".toolbar");
+function ajustarSticky(){ document.documentElement.style.setProperty("--toolbar-h", toolbar.offsetHeight+"px"); }
+ajustarSticky();
+if(window.ResizeObserver) new ResizeObserver(ajustarSticky).observe(toolbar);
+window.addEventListener("resize", ajustarSticky);
+
+document.getElementById("copyBtn").addEventListener("click", async ()=>{
+  const byId=Object.fromEntries(DATA.map(d=>[d.id,d]));
+  const lines=["Feedback Kathe — Cotejo de fotos Kyte",""];
+  for(const id in answers){ const a=answers[id]||{}; const d=byId[id]; const parts=[];
+    if(a.kathe&&a.kathe.trim()) parts.push(a.kathe.trim());
+    if(a.urlk && a.urlk!==(d?d.urlk:"")) parts.push("URL Kyte: "+a.urlk);
+    if(a.urlh && a.urlh!==(d?d.urlh:"")) parts.push("URL Horeca: "+a.urlh);
+    if(parts.length) lines.push("["+(d?d.kyte:id)+"]: "+parts.join(" · "));
+  }
+  const txt=lines.length>2?lines.join("\n"):"(Aún no has escrito nada)";
+  try{ await navigator.clipboard.writeText(txt); const b=document.getElementById("copyBtn"); const o=b.textContent; b.textContent="¡Copiado!"; setTimeout(()=>b.textContent=o,1500);}catch(e){ alert(txt); }
+});
+
+(async ()=>{
+  try{
+    const [rd, ra]=await Promise.all([
+      fetch(API+"&tabla=1",{cache:"no-store"}).then(r=>r.json()),
+      fetch(API+"&datos=1",{cache:"no-store"}).then(r=>r.ok?r.json():{respuestas:{}}).catch(()=>({respuestas:{}}))
+    ]);
+    DATA=rd; answers=ra.respuestas||{};
+    filterBar(); tallies(); render();
+  }catch(e){
+    status.textContent="No pude cargar los datos. Revisa el enlace.";
+    document.getElementById("offline").classList.add("show");
+  }
+})();
+</script>
+</body>
+</html>

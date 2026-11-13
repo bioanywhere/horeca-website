@@ -1,0 +1,27 @@
+# Configuración de la app de Fly del worker de WhatsApp.
+# Reconstruida el 2026-10-21 desde `fly config show -a horeca-whatsapp`.
+app = "horeca-whatsapp"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.worker"
+
+[deploy]
+  strategy = "immediate"
+
+[env]
+  # Aplica en Shopify los descuentos/ofertas vigentes de MAYASIS:
+  # baja el precio de la variante y deja el anterior tachado (compareAtPrice).
+  # Poner "informe" para solo reportar sin tocar precios.
+  OFERTAS_SHOPIFY = "aplicar"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
