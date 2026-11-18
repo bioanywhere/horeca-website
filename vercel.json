@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/vigilante",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 13 * * *"
     }
   ],
   "rewrites": [
@@ -23,27 +23,27 @@
     },
     {
       "source": "/recuperacion",
-      "destination": "/api/recuperacion-panel"
+      "destination": "/api/panel?v=recuperacion"
     },
     {
       "source": "/metricas",
-      "destination": "/api/metricas-panel"
+      "destination": "/api/panel?v=metricas"
     },
     {
       "source": "/referidos",
-      "destination": "/api/referidos-panel"
+      "destination": "/api/panel?v=referidos"
     },
     {
       "source": "/entregas",
-      "destination": "/api/entregas-panel"
+      "destination": "/api/panel?v=entregas"
     },
     {
       "source": "/cotizaciones",
-      "destination": "/api/cotizaciones-panel"
+      "destination": "/api/panel?v=cotizaciones"
     },
     {
       "source": "/seo",
-      "destination": "/api/seo-panel"
+      "destination": "/api/panel?v=seo"
     },
     {
       "source": "/api/asesor/c/:codigo",

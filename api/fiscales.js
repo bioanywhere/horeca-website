@@ -29,6 +29,7 @@ export default async function handler(req, res) {
   const gid = `gid://shopify/Customer/${idCliente}`;
 
   try {
+    if (req.query.recompra) return await recompra(gid, res);
     if (req.method === 'GET') return await leer(gid, res);
     if (req.method === 'POST') return await guardar(gid, req, res);
     return res.status(405).json({ error: 'metodo no permitido' });
@@ -36,6 +37,64 @@ export default async function handler(req, res) {
     console.error('fiscales:', e.message);
     return res.status(500).json({ error: 'no se pudo completar la operacion' });
   }
+}
+
+async function recompra(gid, res) {
+  const d = await admin(
+    `query($id: ID!) {
+       customer(id: $id) {
+         orders(first: 1, sortKey: CREATED_AT, reverse: true) {
+           nodes {
+             name
+             processedAt
+             lineItems(first: 100) {
+               nodes {
+                 quantity
+                 title
+                 variant {
+                   id
+                   availableForSale
+                   price
+                   image { url }
+                   product { featuredImage { url } }
+                 }
+               }
+             }
+           }
+         }
+       }
+     }`,
+    { id: gid }
+  );
+
+  const orden = d.customer?.orders?.nodes?.[0];
+  if (!orden) return res.status(200).json({ sesion: true, pedido: null, items: [] });
+
+  const items = [];
+  for (const li of orden.lineItems?.nodes ?? []) {
+    const vgid = li.variant?.id;
+    if (!vgid) continue;
+    items.push({
+      variante: String(vgid).split('/').pop(),
+      cantidad: li.quantity,
+      titulo: li.title,
+      imagen: li.variant?.image?.url || li.variant?.product?.featuredImage?.url || null,
+      precio: li.variant?.price || null,
+      disponible: Boolean(li.variant?.availableForSale),
+    });
+  }
+
+  const permalink = items
+    .filter((i) => i.disponible)
+    .map((i) => `${i.variante}:${i.cantidad}`)
+    .join(',');
+
+  return res.status(200).json({
+    sesion: true,
+    pedido: { nombre: orden.name, fecha: orden.processedAt },
+    items,
+    carrito: permalink ? `/cart/${permalink}` : null,
+  });
 }
 
 async function leer(gid, res) {

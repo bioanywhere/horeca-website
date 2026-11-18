@@ -1,0 +1,8 @@
+/* HZ-TARJETAS-CUADRADAS: todas las tarjetas de producto con imagen en recuadro
+   cuadrado uniforme y la imagen contenida (completa, con márgenes), para que
+   búsqueda y colecciones coincidan y nada se recorte.
+   Se añade al final de assets/component-card.css del tema. */
+.product-card-wrapper .card.ratio,
+.product-card-wrapper .card__inner.ratio { --ratio-percent: 100% !important; }
+.product-card-wrapper .card__media .media img,
+.product-card-wrapper .card__media img { object-fit: contain !important; }
